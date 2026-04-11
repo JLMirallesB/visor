@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visor de Registros</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --border: #e1e6ed;
+    --border-strong: #c9d2de;
+    --text: #1f2937;
+    --text-muted: #6b7280;
+    --primary: #3b6fb6;
+    --primary-hover: #2f5a95;
+    --primary-soft: #eaf1fb;
+    --accent: #5a8f7b;
+    --warn: #c97b3a;
+    --danger: #b3453a;
+    --chip-bg: #eef2f7;
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 8px 24px rgba(15, 23, 42, 0.08);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  button:hover { background: var(--primary-soft); border-color: var(--primary); }
+  button.primary {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+  }
+  button.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  button.ghost { background: transparent; border-color: transparent; color: var(--primary); }
+  button.ghost:hover { background: var(--primary-soft); }
+  input, select {
+    font-family: inherit;
+    font-size: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-soft);
+  }
+  a { color: var(--primary); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Layout */
+  header.topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header.topbar h1 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  header.topbar .crumb {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  header.topbar .spacer { flex: 1; }
+
+  main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  /* Screens */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Home */
+  .home-wrap {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .home-wrap h2 {
+    font-size: 28px;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  .home-wrap p.tagline {
+    color: var(--text-muted);
+    margin: 0 0 40px;
+    font-size: 15px;
+  }
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 720px;
+  }
+  .module-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    box-shadow: var(--shadow);
+  }
+  .module-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+  }
+  .module-card .icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+  .module-card h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+  }
+  .module-card p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 13px;
+  }
+  .module-card.disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+  .module-card.disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow);
+    border-color: var(--border);
+  }
+  .badge {
+    display: inline-block;
+    background: var(--warn);
+    color: #fff;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-top: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Upload */
+  .upload-wrap {
+    max-width: 640px;
+    margin: 40px auto;
+    text-align: center;
+  }
+  .dropzone {
+    border: 2px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 60px 30px;
+    background: var(--surface);
+    transition: background 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  .dropzone.drag {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .dropzone p { margin: 8px 0; color: var(--text-muted); }
+  .dropzone .icon { font-size: 42px; margin-bottom: 10px; }
+
+  /* Soon screen */
+  .soon-wrap {
+    max-width: 560px;
+    margin: 80px auto;
+    text-align: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 60px 30px;
+    box-shadow: var(--shadow);
+  }
+  .soon-wrap .icon { font-size: 48px; margin-bottom: 16px; }
+  .soon-wrap h2 { margin: 0 0 10px; }
+  .soon-wrap p { color: var(--text-muted); }
+
+  /* Toolbar (list view) */
+  .toolbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+  }
+  .toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .toolbar-row + .toolbar-row { margin-top: 8px; }
+  .toolbar input[type=text] { flex: 1; min-width: 220px; }
+  .toolbar select {
+    min-width: 130px;
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .toolbar input[type=text] { padding: 6px 10px; font-size: 13px; }
+  .toolbar .count {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-left: auto;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .filter-group + .filter-group { margin-left: 4px; }
+  .filter-group .filter-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-right: 2px;
+  }
+  .chip-filters {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .chip-filter {
+    padding: 3px 9px;
+    border: 1px solid var(--border-strong);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.4;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, opacity 0.15s;
+    opacity: 0.6;
+  }
+  .chip-filter:hover { border-color: var(--primary); opacity: 1; }
+  .chip-filter.active {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-color: var(--primary);
+    opacity: 1;
+  }
+  .chip-filter.active.s-prioritario { background: #fde2e0; color: var(--danger); border-color: #f0a9a2; }
+  .chip-filter.active.s-activo { background: #dcefe4; color: #2e6b4a; border-color: #a8d2ba; }
+  .chip-filter.active.s-pausa { background: #fbeed2; color: #8a6414; border-color: #e6cc8a; }
+  .chip-filter.active.s-cerrado { background: #e3e6eb; color: #4a5260; border-color: #c1c7d0; }
+  @media (max-width: 700px) {
+    .filter-group { width: 100%; }
+  }
+
+  /* Table */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  thead th {
+    background: #f0f3f7;
+    color: var(--text);
+    font-weight: 600;
+    text-align: left;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+  }
+  thead th:hover { background: #e5ebf2; }
+  thead th .sort-ind { color: var(--primary); margin-left: 4px; }
+  tbody td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tbody tr { cursor: pointer; transition: background 0.1s; }
+  tbody tr:hover { background: var(--primary-soft) !important; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.row-prioritario { background: #fdf2f1; }
+  tbody tr.row-activo { background: #f1f8f4; }
+  tbody tr.row-pausa { background: #fdf8ec; }
+  tbody tr.row-cerrado { background: #f4f5f7; }
+
+  .chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--chip-bg);
+    color: var(--text);
+    white-space: nowrap;
+  }
+  td .muted { color: var(--text-muted); font-weight: normal; font-size: 12px; }
+  th.col-num, td.col-num { text-align: center; width: 60px; }
+  .act-count {
+    display: inline-block;
+    min-width: 24px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .act-count.zero {
+    background: var(--chip-bg);
+    color: var(--text-muted);
+  }
+  .chip.s-prioritario { background: #fde2e0; color: var(--danger); }
+  .chip.s-activo { background: #dcefe4; color: #2e6b4a; }
+  .chip.s-pausa { background: #fbeed2; color: #8a6414; }
+  .chip.s-cerrado { background: #e3e6eb; color: #4a5260; }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 30px;
+    color: var(--text-muted);
+  }
+
+  /* Detail (ficha) */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    box-shadow: var(--shadow);
+  }
+  .card h3 {
+    margin: 0 0 14px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ficha-hero { padding: 22px 26px; }
+  .ficha-hero .hero-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 18px;
+  }
+  .ficha-hero .hero-name {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .ficha-hero .hero-nia {
+    font-size: 17px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-left: 4px;
+  }
+  .ficha-hero .hero-meta {
+    font-size: 15px;
+    color: var(--text-muted);
+  }
+  .ficha-hero .hero-meta strong { color: var(--text); font-weight: 500; }
+  .ficha-hero .tags {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .academic-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) minmax(0, 3fr);
+    gap: 14px 28px;
+  }
+  @media (max-width: 700px) {
+    .academic-row { grid-template-columns: 1fr; }
+  }
+  .contact-section + .contact-section {
+    border-top: 1px solid var(--border);
+    margin-top: 14px;
+    padding-top: 14px;
+  }
+  .contact-section .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .contact-row {
+    display: grid;
+    gap: 10px 24px;
+  }
+  .contact-row.cols-2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .contact-row.cols-3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+  @media (max-width: 700px) {
+    .contact-row.cols-2, .contact-row.cols-3 { grid-template-columns: 1fr; }
+  }
+  details.collapsible { padding: 0; }
+  details.collapsible > summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 16px 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+  }
+  details.collapsible > summary::-webkit-details-marker { display: none; }
+  details.collapsible > summary h3 {
+    margin: 0;
+    border: none;
+    padding: 0;
+    flex: 1;
+  }
+  details.collapsible > summary::after {
+    content: "▸";
+    color: var(--text-muted);
+    font-size: 14px;
+    transition: transform 0.2s;
+  }
+  details.collapsible[open] > summary::after { transform: rotate(90deg); }
+  details.collapsible[open] > summary { border-bottom: 1px solid var(--border); }
+  details.collapsible > .ficha-grid,
+  details.collapsible > .contact-body { padding: 18px 22px 22px; }
+  .ficha-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 24px;
+  }
+  .ficha-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .ficha-field .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+  .ficha-field .value {
+    font-size: 14px;
+    color: var(--text);
+    word-break: break-word;
+  }
+  .ficha-field .value.empty { color: #aab1bb; font-style: italic; }
+  .ficha-field.wide { grid-column: 1 / -1; }
+
+  /* History */
+  .history-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .history-header h3 { margin: 0; border: none; padding: 0; flex: 1; }
+  .entry {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    overflow: hidden;
+    background: #fafbfd;
+  }
+  .entry-head {
+    display: grid;
+    grid-template-columns: 110px 130px 1fr 180px 80px 24px;
+    gap: 12px;
+    padding: 10px 14px;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .entry-head:hover { background: #f1f4f9; }
+  .entry-head .date { font-weight: 600; font-size: 13px; }
+  .entry-head .type { }
+  .entry-head .title { font-weight: 500; }
+  .entry-head .attach-icon {
+    background: transparent;
+    border: none;
+    padding: 2px 4px;
+    margin-left: 4px;
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+    opacity: 0.85;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .entry-head .attach-icon:hover {
+    background: var(--primary-soft);
+    opacity: 1;
+  }
+  .entry-head .prof { color: var(--text-muted); font-size: 13px; }
+  .entry-head .curso { color: var(--text-muted); font-size: 13px; text-align: center; }
+  .entry-head .caret {
+    transition: transform 0.2s;
+    color: var(--text-muted);
+    text-align: right;
+  }
+  .entry.open .entry-head .caret { transform: rotate(90deg); }
+  .entry-body {
+    display: none;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .entry.open .entry-body { display: block; }
+  .entry-body .field { margin-bottom: 12px; }
+  .entry-body .field:last-child { margin-bottom: 0; }
+  .entry-body .field .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 3px;
+  }
+  .entry-body .field .value { white-space: pre-wrap; }
+  .pdf-wrap {
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: #f0f3f7;
+  }
+  .pdf-wrap iframe {
+    width: 100%;
+    height: 520px;
+    border: 0;
+    display: block;
+  }
+  .entry-actions {
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    justify-content: flex-end;
+  }
+  .entry-print {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  .pdf-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .chip.type-reunion { background: #e0e9f5; color: #2a4e87; }
+  .chip.type-informe { background: #e7e0f5; color: #5235a8; }
+  .chip.type-decision { background: #fdecc8; color: #8a5a0c; }
+  .chip.type-suceso { background: #fde0de; color: #a83429; }
+  .chip.type-comunicacionfamilia { background: #dff0e8; color: #2b6648; }
+  .chip.type-derivacion { background: #e1f1f5; color: #1f5f6e; }
+  .chip.type-otro { background: var(--chip-bg); color: var(--text); }
+
+  /* Error banner */
+  .error-banner {
+    background: #fde0de;
+    color: var(--danger);
+    border: 1px solid #f5b4ae;
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .notice-banner {
+    background: #fbeed2;
+    color: #6b4a0c;
+    border: 1px solid #f0d68a;
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    margin: 0 auto 24px;
+    max-width: 720px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .notice-banner strong { color: #5a3d08; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tab {
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 0;
+  }
+  .tab:hover { color: var(--text); background: transparent; border-color: transparent; border-bottom-color: var(--border-strong); }
+  .tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+
+  /* Stats */
+  .stats-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 18px 0 8px;
+  }
+  .stats-section-title:first-child { margin-top: 0; }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .stats-grid .full { grid-column: 1 / -1; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    box-shadow: var(--shadow);
+  }
+  .stat-card h4 {
+    margin: 0 0 14px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+  }
+  .stat-bar-row {
+    display: grid;
+    grid-template-columns: 130px 1fr 40px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .stat-bar-row:last-child { margin-bottom: 0; }
+  .stat-bar-row .count { font-weight: 600; text-align: right; }
+  .stat-bar-row .bar {
+    height: 10px;
+    background: var(--chip-bg);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .stat-bar-row .bar-fill {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 5px;
+    transition: width 0.3s;
+  }
+  .stat-bar-row .bar-fill.s-prioritario { background: var(--danger); }
+  .stat-bar-row .bar-fill.s-activo { background: #2e6b4a; }
+  .stat-bar-row .bar-fill.s-pausa { background: #b0820f; }
+  .stat-bar-row .bar-fill.s-cerrado { background: #6b7280; }
+  .big-numbers {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .big-number .value { font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .big-number .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .big-number .delta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .big-number .delta.up { color: #2e6b4a; }
+  .big-number .delta.down { color: var(--danger); }
+  .stat-list { font-size: 13px; }
+  .stat-list-empty { color: var(--text-muted); font-style: italic; padding: 8px 0; font-size: 13px; }
+  .stat-list-item {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    transition: background 0.1s;
+  }
+  .stat-list-item:last-child { border-bottom: none; }
+  .stat-list-item:hover { background: var(--primary-soft); }
+  .stat-list-meta { color: var(--text-muted); font-size: 12px; }
+  .stat-list-more { color: var(--text-muted); font-size: 12px; padding: 8px 10px; font-style: italic; }
+  .month-chart {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 8px;
+    height: 140px;
+    align-items: end;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .month-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+  }
+  .month-col .vbar {
+    width: 70%;
+    background: var(--primary);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.3s;
+  }
+  .month-col .vbar.current { background: var(--accent); }
+  .month-col .vcount { font-size: 10px; color: var(--text-muted); margin-bottom: 3px; }
+  .month-labels {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .month-labels span { text-align: center; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+  @media (max-width: 800px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Help button */
+  .help-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .help-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
+  .help-popover {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 18px 20px;
+    max-width: 320px;
+    font-size: 13px;
+    line-height: 1.6;
+    z-index: 100;
+    display: none;
+  }
+  .help-popover.open { display: block; }
+  .help-popover p { margin: 0 0 10px; }
+  .help-popover .credits-links {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .help-popover a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .help-popover .credits-version {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 8px 0 4px;
+  }
+  .help-popover .link-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+    text-decoration: underline;
+  }
+  .help-popover .link-btn:hover { color: var(--primary-hover); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    max-width: 640px;
+    width: 100%;
+    max-height: 88vh;
+    overflow: auto;
+    padding: 26px 30px;
+    position: relative;
+  }
+  .modal h2 { margin: 0 0 4px; font-size: 22px; }
+  .modal .modal-sub { color: var(--text-muted); font-size: 13px; margin-bottom: 20px; }
+  .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .modal-close:hover { color: var(--text); background: var(--chip-bg); }
+  .changelog-version + .changelog-version {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  .changelog-version h3 {
+    font-size: 14px;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .changelog-version h3 .date { color: var(--text-muted); font-size: 12px; font-weight: normal; }
+  .changelog-version ul { margin: 0; padding-left: 22px; font-size: 13px; line-height: 1.55; }
+  .changelog-version li { margin-bottom: 4px; }
+
+  .print-only { display: none; }
+
+  /* Print */
+  @media print {
+    @page { size: A4; margin: 16mm 14mm; }
+    html, body {
+      background: #fff !important;
+      color: #000 !important;
+      font-size: 10.5pt;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .print-only { display: block !important; }
+    .print-header {
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #000;
+    }
+    .print-header .print-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .print-header .print-centro {
+      font-size: 9pt;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #555;
+    }
+    .print-header .print-centro:empty { display: none; }
+    .print-header .print-confid {
+      font-size: 8.5pt;
+      color: #666;
+      font-style: italic;
+    }
+    .print-header .print-title {
+      font-size: 16pt;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+    .print-header .print-date {
+      font-size: 8.5pt;
+      color: #666;
+      margin-top: 4px;
+    }
+    /* Ocultar campos vacíos y secciones académicas vacías */
+    .ficha-field:has(.value.empty) { display: none !important; }
+    .academic-row:not(:has(.ficha-field:not(:has(.value.empty)))) { display: none !important; }
+    .entry-actions { display: none !important; }
+    /* Modo: imprimir solo una actuación */
+    body.print-mode-entry .card:has(.academic-row),
+    body.print-mode-entry details.collapsible,
+    body.print-mode-entry .history-header { display: none !important; }
+    body.print-mode-entry #entriesList > .entry:not(.print-target) { display: none !important; }
+    body.print-mode-entry .print-title::after {
+      content: " · Actuación individual";
+      font-weight: 400;
+      font-size: 12pt;
+      color: #555;
+    }
+    /* Stats en print */
+    .stats-grid { gap: 10px !important; }
+    .stat-card h4 { font-size: 9.5pt !important; margin-bottom: 10px !important; }
+    .big-number .value { font-size: 22pt !important; }
+    .big-number .label { font-size: 8pt !important; }
+    .big-number .delta { font-size: 8.5pt !important; }
+    .stat-bar-row { font-size: 10pt !important; margin-bottom: 5px !important; }
+    .month-chart { height: 90px !important; }
+    .stats-section-title { font-size: 9pt !important; margin: 12px 0 6px !important; }
+    /* Convertir las listas (pendientes/alertas) en no clicables visualmente */
+    .stat-list-item { cursor: default !important; }
+    header.topbar,
+    .help-btn,
+    .help-popover,
+    .tabs,
+    .toolbar,
+    .pdf-actions,
+    button,
+    .entry-head .caret,
+    .entry-head .attach-icon,
+    details > summary::after { display: none !important; }
+    main { padding: 0 !important; max-width: none !important; margin: 0 !important; }
+    .card, .stat-card {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+      border-radius: 4px !important;
+      page-break-inside: avoid;
+      break-inside: avoid;
+      margin-bottom: 10px;
+      padding: 14px 16px !important;
+    }
+    .ficha-hero {
+      border: none !important;
+      border-bottom: 2px solid #000 !important;
+      border-radius: 0 !important;
+      padding: 0 0 10px !important;
+      margin-bottom: 14px !important;
+    }
+    .ficha-hero .hero-name { font-size: 18pt !important; }
+    .ficha-hero .hero-nia { font-size: 13pt !important; }
+    .ficha-hero .hero-meta { font-size: 11pt !important; }
+    /* En print mantenemos el color de los chips de seguimiento (única señal visual útil) */
+    .ficha-hero .tags .chip { border: none !important; }
+    details.collapsible > summary {
+      padding: 0 0 6px !important;
+      border-bottom: 1px solid #000 !important;
+      cursor: default;
+    }
+    details.collapsible > summary h3 { font-size: 11pt !important; }
+    details.collapsible > .contact-body,
+    details.collapsible > .ficha-grid { padding: 10px 0 0 !important; }
+    .card h3 {
+      font-size: 11pt !important;
+      border-bottom: 1px solid #000 !important;
+      padding-bottom: 4px !important;
+      margin-bottom: 8px !important;
+    }
+    .ficha-field .label { color: #555 !important; }
+    .ficha-field .value { color: #000 !important; }
+    .entry {
+      page-break-inside: avoid;
+      break-inside: avoid;
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      margin-bottom: 6px !important;
+    }
+    .entry-head {
+      grid-template-columns: 90px 100px 1fr 140px 60px !important;
+      gap: 8px !important;
+      padding: 6px 10px !important;
+      background: #f5f5f5 !important;
+    }
+    .entry-body {
+      display: block !important;
+      padding: 8px 12px !important;
+      background: #fff !important;
+      border-top: 1px solid #ccc !important;
+    }
+    .entry-head .type .chip {
+      background: #fff !important;
+      color: #000 !important;
+      border: 1px solid #888 !important;
+    }
+    .pdf-wrap, iframe { display: none !important; }
+    a, a:visited { color: #000 !important; text-decoration: none; }
+    .history-header h3::before { content: ""; }
+    .history-header { display: block !important; }
+    .history-header h3 { margin-bottom: 8px !important; }
+    .contact-section + .contact-section {
+      border-top: 1px solid #ccc !important;
+      margin-top: 8px !important;
+      padding-top: 8px !important;
+    }
+  }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    main { padding: 16px; }
+    header.topbar { padding: 10px 16px; gap: 10px; }
+    header.topbar h1 { font-size: 14px; }
+    .entry-head {
+      grid-template-columns: 1fr 24px;
+      gap: 4px;
+    }
+    .entry-head .date::before { content: "📅 "; }
+    .entry-head .type { grid-column: 1; }
+    .entry-head .title { grid-column: 1; }
+    .entry-head .prof { grid-column: 1; }
+    .entry-head .curso { grid-column: 1; text-align: left; }
+    .entry-head .caret { grid-column: 2; grid-row: 1 / span 5; align-self: center; }
+    thead th:nth-child(n+5),
+    tbody td:nth-child(n+5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1 id="topbarTitle">Visor de Registros</h1>
+  <span class="crumb" id="topbarCrumb"></span>
+  <span class="spacer"></span>
+  <button class="ghost" id="btnHome" style="display:none">← Inicio</button>
+  <button class="ghost" id="btnBackList" style="display:none">← Volver al listado</button>
+  <button class="ghost" id="btnPrint" style="display:none">🖨 Imprimir / PDF</button>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section class="screen active" id="screenHome">
+    <div class="home-wrap">
+      <h2>Visor de Registros</h2>
+      <p class="tagline">Consulta de archivos Excel — elige un módulo para comenzar</p>
+      <div class="module-grid">
+        <div class="module-card" data-module="orientacion">
+          <div class="icon">📋</div>
+          <h3>Registro de Orientación</h3>
+          <p>Fichas de alumnado e historial de actuaciones</p>
+        </div>
+        <div class="module-card disabled" data-module="convivencia">
+          <div class="icon">🤝</div>
+          <h3>Registro de Convivencia</h3>
+          <p>Incidencias y seguimiento convivencial</p>
+          <span class="badge">Próximamente</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONVIVENCIA PLACEHOLDER -->
+  <section class="screen" id="screenConvivencia">
+    <div class="soon-wrap">
+      <div class="icon">🚧</div>
+      <h2>En construcción</h2>
+      <p>El módulo de Registro de Convivencia se añadirá próximamente.</p>
+      <br>
+      <button class="primary" onclick="goHome()">Volver al inicio</button>
+    </div>
+  </section>
+
+  <!-- ORIENTACIÓN: UPLOAD -->
+  <section class="screen" id="screenUpload">
+    <div class="upload-wrap">
+      <h2 style="margin-top:0">Registro de Orientación</h2>
+      <p style="color:var(--text-muted)">Carga el archivo Excel (.xlsx) con las hojas <strong>Sheet1</strong> (registro) y <strong>Ficha</strong>.</p>
+      <div id="errorBanner"></div>
+      <div class="dropzone" id="dropzone">
+        <div class="icon">📁</div>
+        <p><strong>Arrastra el archivo aquí</strong></p>
+        <p>o</p>
+        <button class="primary" id="btnPickFile">Seleccionar archivo .xlsx</button>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
+      </div>
+    </div>
+  </section>
+
+  <!-- ORIENTACIÓN: LIST -->
+  <section class="screen" id="screenList">
+    <div class="tabs">
+      <button class="tab active" data-tab="alumnado">Alumnado</button>
+      <button class="tab" data-tab="estadistica">Estadística</button>
+    </div>
+    <div id="tabAlumnado">
+    <div class="toolbar">
+      <div class="toolbar-row">
+        <input type="text" id="searchInput" placeholder="Buscar por nombre, apellidos, NIA, tutor/a o especialidad…">
+        <select id="filterCurso"><option value="">Curso: todos</option></select>
+        <select id="filterEspecialidad"><option value="">Especialidad: todas</option></select>
+        <select id="filterCursoAcad"><option value="">Curso Acad.: todos</option></select>
+      </div>
+      <div class="toolbar-row">
+        <div class="filter-group">
+          <span class="filter-label">Seguimiento</span>
+          <div class="chip-filters" id="filterSeguimiento"></div>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Situación</span>
+          <div class="chip-filters" id="filterSituacion"></div>
+        </div>
+        <span class="count" id="listCount"></span>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="studentsTable">
+        <thead>
+          <tr>
+            <th data-sort="Apellidos">Apellidos, Nombre (NIA)</th>
+            <th data-sort="Curso">Curso · Especialidad</th>
+            <th data-sort="Tutor/a">Tutor/a</th>
+            <th data-sort="Seguimiento">Seguimiento</th>
+            <th data-sort="Situación">Situación</th>
+            <th data-sort="actuaciones" class="col-num" title="Número de actuaciones registradas">Act.</th>
+          </tr>
+        </thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty-state" style="display:none">Sin resultados con los filtros actuales.</div>
+    </div>
+    </div>
+    <div id="tabEstadistica" style="display:none"></div>
+  </section>
+
+  <!-- ORIENTACIÓN: DETAIL -->
+  <section class="screen" id="screenDetail">
+    <div class="detail-grid" id="detailContent"></div>
+  </section>
+
+</main>
+
+<button class="help-btn" id="helpBtn" title="Acerca de" aria-label="Acerca de">?</button>
+<div class="help-popover" id="helpPopover">
+  <p>Visor diseñado por <strong>José Luis Miralles Bono</strong>, con ayuda de Claude.</p>
+  <div class="credits-version">
+    <strong>VISOR v<span id="appVersionLabel">1.0</span></strong> ·
+    <button class="link-btn" id="btnChangelog">📰 Ver novedades</button>
+  </div>
+  <div class="credits-links">
+    <a href="https://github.com/JLMirallesB/visor" target="_blank" rel="noopener">💻 Repositorio en GitHub</a>
+    <a href="https://ko-fi.com/miralles" target="_blank" rel="noopener">🥤 Invítame a una orchata</a>
+  </div>
+</div>
+
+<div class="modal-overlay" id="changelogModal">
+  <div class="modal">
+    <button class="modal-close" id="changelogClose" aria-label="Cerrar">×</button>
+    <h2>📰 Novedades</h2>
+    <div class="modal-sub">Historial de cambios del VISOR</div>
+    <div id="changelogContent"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   State
+   ========================================================================= */
+const APP_VERSION = "1.0";
+const CHANGELOG = [
+  { version: "1.0", date: "2026-04-11", changes: [
+    "Lanzamiento inicial del visor.",
+    "Carga local de archivos Excel (.xlsx) sin subir nada a internet — los datos no salen del navegador.",
+    "Módulo «Registro de Orientación» con listado, búsqueda multicampo (nombre, apellidos, NIA, tutor/a, especialidad) y filtros.",
+    "Filtros prominentes por Seguimiento y Situación (chips clicables) y selects para Curso, Especialidad y Curso Académico (por defecto el actual).",
+    "Tabla con Apellidos·Nombre·(NIA), Curso·Especialidad, Tutor/a, Seguimiento, Situación y contador de actuaciones por alumno.",
+    "Filas tintadas según el estado de seguimiento; ordenación por defecto de Prioritario a Cerrado.",
+    "Ficha del alumno con cabecera grande, información académica, datos de contacto colapsables (alumno/madre/padre) y edad calculada desde la fecha de nacimiento.",
+    "Histórico de actuaciones expandible, con botón para invertir el orden cronológico, icono clicable de documento adjunto y apertura del adjunto en ventana emergente.",
+    "Pestaña Estadística con 6 bloques: distribución por seguimiento, actuaciones del mes/curso, pendientes propios, alertas de prioritarios sin actuación reciente, distribución por curso, especialidad y diagnósticos, y actividad mensual del curso.",
+    "Generación de PDF mediante el diálogo nativo del navegador: ficha completa, actuación individual o panel de estadísticas, con cabecera personalizable (centro, fecha y nota de confidencialidad).",
+    "Aviso al volver al inicio recordando que los datos cargados se perderán y habrá que volver a cargar el Excel.",
+    "Cálculo automático de Fecha y Curso Académico desde la columna «Hora de inicio» del Forms; profesional leído de la columna «Nombre».",
+    "Módulo «Registro de Convivencia» reservado para futuras versiones."
+  ]}
+];
+
+const SEGUIMIENTO_VALUES = ["Prioritario", "Activo", "Pausa", "Cerrado"];
+const SITUACION_VALUES = [
+  "Espera de actuación/respuesta nuestra",
+  "En espera de actuación/respuesta de otros",
+  "Ninguno"
+];
+const EMPTY_KEY = "__empty__";
+
+const state = {
+  registro: [],
+  ficha: [],
+  fichaByNia: {},
+  registroByNia: {},
+  segOptions: [],
+  sitOptions: [],
+  filters: {
+    search: "",
+    curso: "",
+    especialidad: "",
+    seguimiento: new Set(),
+    situacion: new Set(),
+    cursoAcad: ""
+  },
+  sort: { key: "Seguimiento", dir: 1 },
+  currentScreen: "screenHome",
+  activeTab: "alumnado",
+  centroNombre: ""
+};
+
+const CURSO_VALUES = ["1 EEM","2 EEM","3 EEM","4 EEM","1 EPM","2 EPM","3 EPM","4 EPM","5 EPM","6 EPM"];
+const MONTH_LABELS_ES = ["Sep","Oct","Nov","Dic","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago"];
+
+const FICHA_COLS = [
+  "NIA","Nombre","Apellidos","Fecha de nacimiento","Curso","Especialidad",
+  "Centro ERG","Teléfono Alumno","Mail Alumno",
+  "Nombre Madre","Teléfono Madre","Mail Madre",
+  "Nombre Padre","Teléfono Padre","Mail Padre",
+  "Tutor/a","Diagnóstico","Seguimiento","Situación","Campo Abierto"
+];
+const REG_COLS = [
+  "NIA","Fecha","Curso Académico","Tipo de entrada","Título/Asunto",
+  "Descripción","Profesional que registra","Enlace a documento","Otros"
+];
+
+/* =========================================================================
+   Screens
+   ========================================================================= */
+function show(screenId) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(screenId).classList.add("active");
+  state.currentScreen = screenId;
+  updateTopbar();
+  window.scrollTo(0, 0);
+}
+function updateTopbar() {
+  const title = document.getElementById("topbarTitle");
+  const crumb = document.getElementById("topbarCrumb");
+  const home = document.getElementById("btnHome");
+  const back = document.getElementById("btnBackList");
+  const print = document.getElementById("btnPrint");
+  home.style.display = "none";
+  back.style.display = "none";
+  print.style.display = "none";
+  switch (state.currentScreen) {
+    case "screenHome":
+      title.textContent = "VISOR · Registros";
+      crumb.textContent = "";
+      break;
+    case "screenConvivencia":
+      title.textContent = "VISOR · 🤝 Registro de Convivencia";
+      crumb.textContent = "";
+      home.style.display = "inline-block";
+      break;
+    case "screenUpload":
+      title.textContent = "VISOR · 📋 Registro de Orientación";
+      crumb.textContent = "· Cargar archivo";
+      home.style.display = "inline-block";
+      break;
+    case "screenList":
+      title.textContent = "VISOR · 📋 Registro de Orientación";
+      crumb.textContent = "· Alumnado";
+      home.style.display = "inline-block";
+      break;
+    case "screenDetail":
+      title.textContent = "VISOR · 📋 Registro de Orientación";
+      crumb.textContent = "· Ficha del alumno";
+      home.style.display = "inline-block";
+      back.style.display = "inline-block";
+      print.style.display = "inline-block";
+      break;
+  }
+}
+function goHome() {
+  if (state.ficha.length) {
+    const ok = confirm(
+      "Si vuelves al inicio se descartarán los datos cargados.\n\n" +
+      "Tendrás que volver a cargar el archivo Excel para consultarlos de nuevo.\n\n" +
+      "¿Quieres continuar?"
+    );
+    if (!ok) return;
+    clearLoadedData();
+  }
+  show("screenHome");
+}
+function clearLoadedData() {
+  state.registro = [];
+  state.ficha = [];
+  state.fichaByNia = {};
+  state.registroByNia = {};
+  state.segOptions = [];
+  state.sitOptions = [];
+  state.activeTab = "alumnado";
+  state.filters = {
+    search: "",
+    curso: "",
+    especialidad: "",
+    seguimiento: new Set(),
+    situacion: new Set(),
+    cursoAcad: ""
+  };
+  ["searchInput","filterCurso","filterEspecialidad","filterCursoAcad"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  const fi = document.getElementById("fileInput");
+  if (fi) fi.value = "";
+  clearError();
+}
+
+document.getElementById("btnHome").addEventListener("click", goHome);
+document.getElementById("btnBackList").addEventListener("click", () => show("screenList"));
+function promptCentro() {
+  const def = state.centroNombre || "";
+  const input = prompt(
+    "Nombre del centro a mostrar en la cabecera del PDF.\n\n" +
+    "Deja en blanco y pulsa Aceptar para imprimir sin nombre del centro.\n" +
+    "Pulsa Cancelar para no imprimir.",
+    def
+  );
+  if (input === null) return false;
+  state.centroNombre = input.trim();
+  document.querySelectorAll(".print-centro").forEach(el => {
+    el.textContent = state.centroNombre;
+  });
+  return true;
+}
+
+document.getElementById("btnPrint").addEventListener("click", () => {
+  if (!promptCentro()) return;
+  window.print();
+});
+
+function printSingleEntry(entryEl) {
+  if (!promptCentro()) return;
+  document.querySelectorAll(".entry.print-target").forEach(e => e.classList.remove("print-target"));
+  entryEl.classList.add("print-target");
+  document.body.classList.add("print-mode-entry");
+  const cleanup = () => {
+    document.body.classList.remove("print-mode-entry");
+    entryEl.classList.remove("print-target");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+}
+
+window.addEventListener("beforeprint", () => {
+  document.querySelectorAll("details").forEach(d => {
+    if (!d.open) {
+      d.dataset.wasClosed = "1";
+      d.open = true;
+    }
+  });
+  document.querySelectorAll(".entry").forEach(e => {
+    if (!e.classList.contains("open")) {
+      e.dataset.wasClosed = "1";
+      e.classList.add("open");
+    }
+  });
+});
+window.addEventListener("afterprint", () => {
+  document.querySelectorAll("details[data-was-closed]").forEach(d => {
+    d.open = false;
+    delete d.dataset.wasClosed;
+  });
+  document.querySelectorAll(".entry[data-was-closed]").forEach(e => {
+    e.classList.remove("open");
+    delete e.dataset.wasClosed;
+  });
+});
+
+function activateTab(name) {
+  state.activeTab = name;
+  document.querySelectorAll(".tabs .tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.tab === name);
+  });
+  document.getElementById("tabAlumnado").style.display = name === "alumnado" ? "" : "none";
+  document.getElementById("tabEstadistica").style.display = name === "estadistica" ? "" : "none";
+  if (name === "estadistica") renderStats();
+  // Botón Imprimir visible solo cuando la pestaña Estadística está activa
+  if (state.currentScreen === "screenList") {
+    document.getElementById("btnPrint").style.display = name === "estadistica" ? "inline-block" : "none";
+  }
+}
+document.querySelectorAll(".tabs .tab").forEach(t => {
+  t.addEventListener("click", () => activateTab(t.dataset.tab));
+});
+
+document.querySelectorAll(".module-card").forEach(card => {
+  card.addEventListener("click", () => {
+    const mod = card.dataset.module;
+    if (mod === "orientacion") {
+      if (state.ficha.length) show("screenList");
+      else show("screenUpload");
+    } else if (mod === "convivencia") {
+      show("screenConvivencia");
+    }
+  });
+});
+
+/* =========================================================================
+   File loading
+   ========================================================================= */
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+document.getElementById("btnPickFile").addEventListener("click", e => {
+  e.stopPropagation();
+  fileInput.click();
+});
+dropzone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+["dragenter","dragover"].forEach(ev => {
+  dropzone.addEventListener(ev, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add("drag");
+  });
+});
+["dragleave","drop"].forEach(ev => {
+  dropzone.addEventListener(ev, e => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove("drag");
+  });
+});
+dropzone.addEventListener("drop", e => {
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+function showError(msg) {
+  const el = document.getElementById("errorBanner");
+  el.innerHTML = `<div class="error-banner">${msg}</div>`;
+}
+function clearError() {
+  document.getElementById("errorBanner").innerHTML = "";
+}
+
+function handleFile(file) {
+  clearError();
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: "array", cellDates: true });
+      parseWorkbook(wb);
+      buildIndexes();
+      populateFilterOptions();
+      renderList();
+      activateTab("alumnado");
+      show("screenList");
+    } catch (err) {
+      console.error(err);
+      showError("Error al leer el archivo: " + err.message);
+    }
+  };
+  reader.onerror = () => showError("No se pudo leer el archivo.");
+  reader.readAsArrayBuffer(file);
+}
+
+function findSheet(wb, name) {
+  const target = name.toLowerCase().trim();
+  const match = wb.SheetNames.find(n => n.toLowerCase().trim() === target);
+  return match ? wb.Sheets[match] : null;
+}
+
+function parseWorkbook(wb) {
+  const sReg = findSheet(wb, "Sheet1") || findSheet(wb, "Registro");
+  const sFic = findSheet(wb, "Ficha");
+  if (!sReg) throw new Error("No se encuentra la hoja 'Sheet1' (registro).");
+  if (!sFic) throw new Error("No se encuentra la hoja 'Ficha'.");
+  state.registro = XLSX.utils.sheet_to_json(sReg, { defval: "", raw: true });
+  state.ficha = XLSX.utils.sheet_to_json(sFic, { defval: "", raw: true });
+  state.registro.forEach(r => {
+    if (r.NIA != null) r.NIA = String(r.NIA).trim();
+    normalizeRegistroRow(r);
+  });
+  state.ficha.forEach(r => { if (r.NIA != null) r.NIA = String(r.NIA).trim(); });
+}
+
+function normalizeKey(s) {
+  return String(s || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+function getField(row, ...candidates) {
+  for (const c of candidates) {
+    if (row[c] != null && row[c] !== "") return row[c];
+  }
+  const wanted = candidates.map(normalizeKey);
+  for (const k of Object.keys(row)) {
+    if (wanted.includes(normalizeKey(k)) && row[k] !== "" && row[k] != null) return row[k];
+  }
+  return "";
+}
+
+function normalizeRegistroRow(r) {
+  // Forms columns: Id, Hora de inicio, Hora de finalización, Correo electrónico, Nombre, NIA, …
+  // Fecha ← Hora de inicio (con fallback) si no existe explícitamente
+  if (!r.Fecha) {
+    r.Fecha = r["Hora de inicio"] || r["Hora de finalización"] || r["Hora de finalizacion"] || "";
+  }
+  // Curso Académico se calcula siempre desde la fecha (la columna del Excel ha desaparecido)
+  const d = parseDate(r.Fecha);
+  if (d) r["Curso Académico"] = academicYearFromDate(d);
+}
+
+function academicYearFromDate(d) {
+  // Spain: academic year starts September. Sep-Dec → YY/(YY+1); Jan-Aug → (YY-1)/YY
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1; // 1-12
+  const startYear = m >= 9 ? y : y - 1;
+  const a = String(startYear).slice(-2);
+  const b = String(startYear + 1).slice(-2);
+  return `${a}-${b}`;
+}
+
+function buildIndexes() {
+  state.fichaByNia = {};
+  state.ficha.forEach(r => { if (r.NIA) state.fichaByNia[r.NIA] = r; });
+  state.registroByNia = {};
+  state.registro.forEach(r => {
+    if (!r.NIA) return;
+    (state.registroByNia[r.NIA] ||= []).push(r);
+  });
+  Object.values(state.registroByNia).forEach(list =>
+    list.sort((a, b) => (parseDate(b.Fecha) || 0) - (parseDate(a.Fecha) || 0))
+  );
+}
+
+/* =========================================================================
+   Filters
+   ========================================================================= */
+function uniqueSorted(arr) {
+  return [...new Set(arr.filter(v => v !== "" && v != null))].sort((a, b) => {
+    return String(a).localeCompare(String(b), "es", { numeric: true, sensitivity: "base" });
+  });
+}
+function populateFilterOptions() {
+  const cursos = uniqueSorted(state.ficha.map(r => r.Curso));
+  const especs = uniqueSorted(state.ficha.map(r => r.Especialidad));
+  const segsData = uniqueSorted(state.ficha.map(r => r.Seguimiento));
+  const sitsData = uniqueSorted(state.ficha.map(r => getStudentSituacion(r)));
+  const hasEmptySeg = state.ficha.some(r => !r.Seguimiento);
+  const hasEmptySit = state.ficha.some(r => !getStudentSituacion(r));
+  const cAcad = uniqueSorted(state.registro.map(r => r["Curso Académico"] || r["Curso Academico"]));
+
+  setOptions("filterCurso", "Curso: todos", cursos);
+  setOptions("filterEspecialidad", "Especialidad: todas", especs);
+  setOptions("filterCursoAcad", "Curso Acad.: todos", cAcad);
+
+  // Curso académico: por defecto el actual si existe en los datos
+  const currentYear = academicYearFromDate(new Date());
+  state.filters.cursoAcad = cAcad.includes(currentYear) ? currentYear : "";
+  document.getElementById("filterCursoAcad").value = state.filters.cursoAcad;
+
+  // Seguimiento / Situación: canónicos primero, luego cualquier extra de los datos
+  state.segOptions = [
+    ...SEGUIMIENTO_VALUES,
+    ...segsData.filter(v => !SEGUIMIENTO_VALUES.includes(v))
+  ];
+  state.sitOptions = [
+    ...SITUACION_VALUES,
+    ...sitsData.filter(v => !SITUACION_VALUES.includes(v))
+  ];
+  if (hasEmptySeg) state.segOptions.push(EMPTY_KEY);
+  if (hasEmptySit) state.sitOptions.push(EMPTY_KEY);
+
+  state.filters.seguimiento = new Set(state.segOptions);
+  state.filters.situacion = new Set(state.sitOptions);
+  renderChipFilters();
+}
+
+function renderChipFilters() {
+  const segWrap = document.getElementById("filterSeguimiento");
+  const sitWrap = document.getElementById("filterSituacion");
+  segWrap.innerHTML = "";
+  sitWrap.innerHTML = "";
+  const makeChip = (value, set) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    const label = value === EMPTY_KEY ? "(Sin valor)" : value;
+    const extra = value === EMPTY_KEY ? "" : " " + segClass(value);
+    chip.className = "chip-filter" + extra + (set.has(value) ? " active" : "");
+    chip.textContent = label;
+    chip.addEventListener("click", () => {
+      if (set.has(value)) set.delete(value);
+      else set.add(value);
+      chip.classList.toggle("active");
+      renderList();
+    });
+    return chip;
+  };
+  state.segOptions.forEach(v => segWrap.appendChild(makeChip(v, state.filters.seguimiento)));
+  state.sitOptions.forEach(v => sitWrap.appendChild(makeChip(v, state.filters.situacion)));
+}
+function setOptions(id, placeholder, values) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = `<option value="">${placeholder}</option>` +
+    values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+}
+
+["searchInput","filterCurso","filterEspecialidad","filterCursoAcad"].forEach(id => {
+  document.getElementById(id).addEventListener("input", () => {
+    state.filters.search = document.getElementById("searchInput").value;
+    state.filters.curso = document.getElementById("filterCurso").value;
+    state.filters.especialidad = document.getElementById("filterEspecialidad").value;
+    state.filters.cursoAcad = document.getElementById("filterCursoAcad").value;
+    renderList();
+  });
+});
+
+document.querySelectorAll("#studentsTable thead th").forEach(th => {
+  th.addEventListener("click", () => {
+    const key = th.dataset.sort;
+    if (!key) return;
+    if (state.sort.key === key) state.sort.dir *= -1;
+    else { state.sort.key = key; state.sort.dir = 1; }
+    renderList();
+  });
+});
+
+/* =========================================================================
+   Rendering: student list
+   ========================================================================= */
+function getStudentSituacion(r) { return r["Situación"] || r.Situacion || ""; }
+
+function renderList() {
+  const q = state.filters.search.trim().toLowerCase();
+  let rows = state.ficha.slice();
+
+  if (q) {
+    rows = rows.filter(r => {
+      const hay = [r.Nombre, r.Apellidos, r.NIA, r["Tutor/a"], r.Especialidad]
+        .map(v => String(v || "").toLowerCase()).join(" ");
+      return hay.includes(q);
+    });
+  }
+  if (state.filters.curso) rows = rows.filter(r => r.Curso === state.filters.curso);
+  if (state.filters.especialidad) rows = rows.filter(r => r.Especialidad === state.filters.especialidad);
+  rows = rows.filter(r => {
+    const v = r.Seguimiento || EMPTY_KEY;
+    return state.filters.seguimiento.has(v);
+  });
+  rows = rows.filter(r => {
+    const v = getStudentSituacion(r) || EMPTY_KEY;
+    return state.filters.situacion.has(v);
+  });
+  if (state.filters.cursoAcad) {
+    const niasInYear = new Set(
+      state.registro
+        .filter(r => (r["Curso Académico"] || r["Curso Academico"]) === state.filters.cursoAcad)
+        .map(r => r.NIA)
+    );
+    rows = rows.filter(r => niasInYear.has(r.NIA));
+  }
+
+  rows.sort((a, b) => {
+    const k = state.sort.key;
+    let va, vb;
+    if (k === "Seguimiento") {
+      va = seguimientoRank(a.Seguimiento);
+      vb = seguimientoRank(b.Seguimiento);
+    } else if (k === "actuaciones") {
+      va = (state.registroByNia[a.NIA] || []).length;
+      vb = (state.registroByNia[b.NIA] || []).length;
+    } else {
+      va = String(a[k] || "").toLowerCase();
+      vb = String(b[k] || "").toLowerCase();
+    }
+    if (va < vb) return -1 * state.sort.dir;
+    if (va > vb) return 1 * state.sort.dir;
+    // Desempate estable: por apellidos y nombre
+    const ax = (String(a.Apellidos || "") + " " + String(a.Nombre || "")).toLowerCase();
+    const bx = (String(b.Apellidos || "") + " " + String(b.Nombre || "")).toLowerCase();
+    return ax < bx ? -1 : ax > bx ? 1 : 0;
+  });
+
+  document.getElementById("listCount").textContent =
+    `${rows.length} alumno${rows.length === 1 ? "" : "s"}`;
+
+  const tbody = document.getElementById("studentsBody");
+  const empty = document.getElementById("emptyState");
+  if (!rows.length) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+  } else {
+    empty.style.display = "none";
+    tbody.innerHTML = rows.map(r => {
+      const sit = getStudentSituacion(r);
+      const apellidos = String(r.Apellidos || "").trim();
+      const nombre = String(r.Nombre || "").trim();
+      const nameParts = [apellidos, nombre].filter(Boolean).join(", ");
+      const niaStr = r.NIA ? `<span class="muted">(${escapeHtml(r.NIA)})</span>` : "";
+      const curso = String(r.Curso || "").trim();
+      const espec = String(r.Especialidad || "").trim();
+      const cursoEspec = [curso, espec].filter(Boolean).join(" · ");
+      const rowCls = r.Seguimiento ? "row-" + segClass(r.Seguimiento).replace("s-", "") : "";
+      const actCount = (state.registroByNia[r.NIA] || []).length;
+      return `
+        <tr data-nia="${escapeAttr(r.NIA)}" class="${rowCls}">
+          <td><strong>${escapeHtml(nameParts) || "—"}</strong> ${niaStr}</td>
+          <td>${escapeHtml(cursoEspec)}</td>
+          <td>${escapeHtml(r["Tutor/a"])}</td>
+          <td>${r.Seguimiento ? `<span class="chip ${segClass(r.Seguimiento)}">${escapeHtml(r.Seguimiento)}</span>` : ""}</td>
+          <td>${escapeHtml(sit)}</td>
+          <td class="col-num">${actCount > 0 ? `<span class="act-count">${actCount}</span>` : `<span class="act-count zero">0</span>`}</td>
+        </tr>`;
+    }).join("");
+    tbody.querySelectorAll("tr").forEach(tr => {
+      tr.addEventListener("click", () => openDetail(tr.dataset.nia));
+    });
+  }
+
+  document.querySelectorAll("#studentsTable thead th").forEach(th => {
+    th.querySelector(".sort-ind")?.remove();
+    if (th.dataset.sort === state.sort.key) {
+      const ind = document.createElement("span");
+      ind.className = "sort-ind";
+      ind.textContent = state.sort.dir > 0 ? "▲" : "▼";
+      th.appendChild(ind);
+    }
+  });
+}
+
+function seguimientoRank(s) {
+  const idx = SEGUIMIENTO_VALUES.indexOf(s);
+  return idx === -1 ? 99 : idx;
+}
+
+function segClass(s) {
+  const n = String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (n.includes("priorit")) return "s-prioritario";
+  if (n.includes("activ")) return "s-activo";
+  if (n.includes("pausa")) return "s-pausa";
+  if (n.includes("cerrad")) return "s-cerrado";
+  return "";
+}
+
+function typeClass(t) {
+  const n = String(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, "");
+  return "type-" + (n || "otro");
+}
+
+/* =========================================================================
+   Rendering: student detail
+   ========================================================================= */
+function openDetail(nia) {
+  const r = state.fichaByNia[nia];
+  if (!r) return;
+  const entries = state.registroByNia[nia] || [];
+  const container = document.getElementById("detailContent");
+  container.innerHTML = renderFicha(r) + renderHistory(entries);
+  bindHistoryEvents();
+  show("screenDetail");
+}
+
+function renderFicha(r) {
+  const age = calcAge(r["Fecha de nacimiento"]);
+  const apellidos = String(r.Apellidos || "").trim();
+  const nombre = String(r.Nombre || "").trim();
+  const headName = [apellidos, nombre].filter(Boolean).join(", ") || "(sin nombre)";
+  const curso = String(r.Curso || "").trim();
+  const espec = String(r.Especialidad || "").trim();
+  const especCurso = [espec, curso].filter(Boolean).join(" · ");
+  const sit = getStudentSituacion(r);
+  const tutor = String(r["Tutor/a"] || "").trim();
+
+  let metaLine = "";
+  if (especCurso || tutor) {
+    const parts = [];
+    if (especCurso) parts.push(`<strong>${escapeHtml(especCurso)}</strong>`);
+    if (tutor) parts.push(`(${escapeHtml(tutor)})`);
+    metaLine = `<span class="hero-meta">${parts.join(" ")}</span>`;
+  }
+
+  const tags = [];
+  if (r.Seguimiento) tags.push(`<span class="chip ${segClass(r.Seguimiento)}">${escapeHtml(r.Seguimiento)}</span>`);
+  if (sit) tags.push(`<span class="chip">${escapeHtml(sit)}</span>`);
+
+
+  const datosBasicos = `
+    <div class="contact-section">
+      <div class="section-title">Datos básicos</div>
+      <div class="contact-row cols-2">
+        ${fichaField("Fecha de nacimiento",
+          formatDate(r["Fecha de nacimiento"]) + (age != null ? `  ·  ${age} años` : ""))}
+        ${fichaField("Centro ERG", r["Centro ERG"])}
+      </div>
+    </div>`;
+  const alumno = `
+    <div class="contact-section">
+      <div class="section-title">Alumno/a</div>
+      <div class="contact-row cols-2">
+        ${fichaField("Teléfono", r["Teléfono Alumno"])}
+        ${fichaField("Mail", mailLink(r["Mail Alumno"]))}
+      </div>
+    </div>`;
+  const madre = `
+    <div class="contact-section">
+      <div class="section-title">Madre</div>
+      <div class="contact-row cols-3">
+        ${fichaField("Nombre", r["Nombre Madre"])}
+        ${fichaField("Teléfono", r["Teléfono Madre"])}
+        ${fichaField("Mail", mailLink(r["Mail Madre"]))}
+      </div>
+    </div>`;
+  const padre = `
+    <div class="contact-section">
+      <div class="section-title">Padre</div>
+      <div class="contact-row cols-3">
+        ${fichaField("Nombre", r["Nombre Padre"])}
+        ${fichaField("Teléfono", r["Teléfono Padre"])}
+        ${fichaField("Mail", mailLink(r["Mail Padre"]))}
+      </div>
+    </div>`;
+
+  const printDate = formatPrintTimestamp(new Date());
+  return `
+    <div class="print-only print-header">
+      <div class="print-top">
+        <div class="print-centro">${escapeHtml(state.centroNombre || "")}</div>
+        <div class="print-confid">Documento confidencial — Departamento de Orientación</div>
+      </div>
+      <div class="print-title">Ficha de orientación</div>
+      <div class="print-date">Generado el ${escapeHtml(printDate)}</div>
+    </div>
+    <div class="card ficha-hero">
+      <div class="hero-line">
+        <span class="hero-name">${escapeHtml(headName)}${r.NIA ? `<span class="hero-nia">(${escapeHtml(r.NIA)})</span>` : ""}</span>
+        ${metaLine}
+      </div>
+      ${tags.length ? `<div class="tags">${tags.join("")}</div>` : ""}
+    </div>
+    <div class="card">
+      <h3>Información académica y seguimiento</h3>
+      <div class="academic-row">
+        ${fichaField("Diagnóstico", r["Diagnóstico"] || r.Diagnostico)}
+        ${fichaField("Campo Abierto", r["Campo Abierto"])}
+      </div>
+    </div>
+    <details class="card collapsible">
+      <summary><h3>Datos de contacto</h3></summary>
+      <div class="contact-body">
+        ${datosBasicos}
+        ${alumno}
+        ${madre}
+        ${padre}
+      </div>
+    </details>
+  `;
+}
+function fichaField(label, value, wide = false) {
+  const isEmpty = value === "" || value == null;
+  const cls = "ficha-field" + (wide ? " wide" : "");
+  const val = isEmpty
+    ? `<span class="value empty">—</span>`
+    : `<span class="value">${typeof value === "string" && value.startsWith("<") ? value : escapeHtml(String(value))}</span>`;
+  return `<div class="${cls}"><span class="label">${escapeHtml(label)}</span>${val}</div>`;
+}
+function mailLink(m) {
+  if (!m) return "";
+  const s = String(m).trim();
+  if (!s) return "";
+  return `<a href="mailto:${escapeAttr(s)}">${escapeHtml(s)}</a>`;
+}
+
+function renderHistory(entries) {
+  if (!entries.length) {
+    return `<div class="card"><h3>Histórico de actuaciones</h3>
+      <div class="empty-state" style="padding:20px">Sin entradas en el registro para este alumno.</div></div>`;
+  }
+  const items = entries.map((r, i) => {
+    const date = formatDate(r.Fecha);
+    const type = getField(r, "Tipo de entrada", "Tipo");
+    const title = getField(r, "Título/Asunto", "Titulo/Asunto", "Título", "Titulo", "Asunto");
+    const prof = getField(r, "Nombre", "Profesional que registra", "Profesional");
+    const curso = getField(r, "Curso Académico", "Curso Academico");
+    const desc = getField(r, "Descripción", "Descripcion");
+    const otros = getField(r, "Otros");
+    const link = getField(r, "Enlace a documento (subir pdf)", "Enlace a documento", "Enlace", "Documento", "URL");
+    return `
+      <div class="entry" data-idx="${i}">
+        <div class="entry-head">
+          <span class="date">${escapeHtml(date)}</span>
+          <span class="type">${type ? `<span class="chip ${typeClass(type)}">${escapeHtml(type)}</span>` : ""}</span>
+          <span class="title">${escapeHtml(title)}${link ? ` <button type="button" class="attach-icon open-popup" data-url="${escapeAttr(link)}" title="Abrir documento adjunto">🔗</button>` : ""}</span>
+          <span class="prof">${escapeHtml(prof)}</span>
+          <span class="curso">${escapeHtml(curso)}</span>
+          <span class="caret">▶</span>
+        </div>
+        <div class="entry-body">
+          ${desc ? `<div class="field"><div class="label">Descripción</div><div class="value">${escapeHtml(desc)}</div></div>` : ""}
+          ${otros ? `<div class="field"><div class="label">Otros</div><div class="value">${escapeHtml(otros)}</div></div>` : ""}
+          ${link ? renderPdfBlock(link) : ""}
+          <div class="entry-actions">
+            <button class="entry-print">🖨 Imprimir esta actuación</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="card">
+      <div class="history-header">
+        <h3>Histórico de actuaciones (${entries.length})</h3>
+        <button id="btnToggleOrder" data-order="desc" title="Invertir orden cronológico">↓ Más recientes primero</button>
+        <button id="btnExpandAll">Expandir todas</button>
+        <button id="btnCollapseAll">Contraer</button>
+      </div>
+      <div id="entriesList">${items}</div>
+    </div>
+  `;
+}
+function renderPdfBlock(link) {
+  const safe = String(link).trim();
+  return `
+    <div class="field">
+      <div class="label">Documento</div>
+      <div class="pdf-actions">
+        <button class="primary open-popup" data-url="${escapeAttr(safe)}">Abrir documento</button>
+      </div>
+    </div>`;
+}
+
+function bindHistoryEvents() {
+  document.querySelectorAll(".entry-head").forEach(head => {
+    head.addEventListener("click", () => head.parentElement.classList.toggle("open"));
+  });
+  document.getElementById("btnExpandAll")?.addEventListener("click", () => {
+    document.querySelectorAll(".entry").forEach(e => e.classList.add("open"));
+  });
+  document.getElementById("btnCollapseAll")?.addEventListener("click", () => {
+    document.querySelectorAll(".entry").forEach(e => e.classList.remove("open"));
+  });
+  document.querySelectorAll(".entry-print").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const entry = btn.closest(".entry");
+      if (entry) printSingleEntry(entry);
+    });
+  });
+  document.getElementById("btnToggleOrder")?.addEventListener("click", e => {
+    const btn = e.currentTarget;
+    const list = document.getElementById("entriesList");
+    if (!list) return;
+    const children = Array.from(list.children);
+    children.reverse().forEach(c => list.appendChild(c));
+    const newOrder = btn.dataset.order === "desc" ? "asc" : "desc";
+    btn.dataset.order = newOrder;
+    btn.textContent = newOrder === "desc" ? "↓ Más recientes primero" : "↑ Más antiguas primero";
+  });
+  document.querySelectorAll(".open-popup").forEach(btn => {
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      const url = btn.dataset.url;
+      if (!url) return;
+      const w = Math.min(1100, Math.round(window.screen.availWidth * 0.85));
+      const h = Math.min(900, Math.round(window.screen.availHeight * 0.9));
+      const left = Math.round((window.screen.availWidth - w) / 2);
+      const top = Math.round((window.screen.availHeight - h) / 2);
+      window.open(
+        url,
+        "visorDocPopup",
+        `popup=yes,width=${w},height=${h},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+    });
+  });
+}
+
+/* =========================================================================
+   Stats
+   ========================================================================= */
+function renderStats() {
+  const container = document.getElementById("tabEstadistica");
+  if (!container) return;
+  if (!state.ficha.length) {
+    container.innerHTML = `<div class="empty-state">Sin datos cargados.</div>`;
+    return;
+  }
+  const now = new Date();
+
+  // 1. Distribución por seguimiento
+  const segCounts = {};
+  SEGUIMIENTO_VALUES.forEach(s => (segCounts[s] = 0));
+  state.ficha.forEach(r => {
+    if (r.Seguimiento && segCounts[r.Seguimiento] != null) segCounts[r.Seguimiento]++;
+  });
+  const segMax = Math.max(1, ...Object.values(segCounts));
+
+  // 2. Pendientes propios (situación = espera nuestra)
+  const pendientes = state.ficha
+    .filter(r => /espera.*nuestra/i.test(getStudentSituacion(r)))
+    .sort(byApellidosNombre);
+
+  // 3. Alertas: prioritarios sin actuación en últimos 30 días
+  const cutoff = new Date(now.getTime() - 30 * 86400000);
+  const alertas = state.ficha
+    .filter(r => r.Seguimiento === "Prioritario")
+    .map(r => {
+      const entries = state.registroByNia[r.NIA] || [];
+      const lastDate = entries.length ? parseDate(entries[0].Fecha) : null;
+      return { r, lastDate, days: lastDate ? Math.floor((now - lastDate) / 86400000) : null };
+    })
+    .filter(x => !x.lastDate || x.lastDate < cutoff)
+    .sort((a, b) => {
+      if (a.days == null) return -1;
+      if (b.days == null) return 1;
+      return b.days - a.days;
+    });
+
+  // 4. Actuaciones del mes / curso
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const currentYearKey = academicYearFromDate(now);
+  let actThisMonth = 0, actLastMonth = 0, actThisYear = 0;
+  state.registro.forEach(r => {
+    const d = parseDate(r.Fecha);
+    if (!d) return;
+    if (d >= monthStart) actThisMonth++;
+    else if (d >= prevMonthStart && d < monthStart) actLastMonth++;
+    if (r["Curso Académico"] === currentYearKey) actThisYear++;
+  });
+  const monthDelta = actThisMonth - actLastMonth;
+
+  // 5a. Distribución por curso
+  const cursoCounts = {};
+  state.ficha.forEach(r => {
+    if (r.Curso) cursoCounts[r.Curso] = (cursoCounts[r.Curso] || 0) + 1;
+  });
+  const cursoOrder = [
+    ...CURSO_VALUES.filter(c => cursoCounts[c]),
+    ...Object.keys(cursoCounts).filter(c => !CURSO_VALUES.includes(c)).sort()
+  ];
+  const cursoMax = Math.max(1, ...Object.values(cursoCounts));
+
+  // 5b. Distribución por especialidad
+  const especCounts = {};
+  state.ficha.forEach(r => {
+    if (r.Especialidad) especCounts[r.Especialidad] = (especCounts[r.Especialidad] || 0) + 1;
+  });
+  const especSorted = Object.entries(especCounts).sort((a, b) => b[1] - a[1]);
+  const especMax = Math.max(1, ...especSorted.map(e => e[1]));
+
+  // 6. Distribución por diagnóstico (separados por coma o punto y coma)
+  const diagCounts = {};
+  let withDiag = 0;
+  state.ficha.forEach(r => {
+    const raw = String(r["Diagnóstico"] || r.Diagnostico || "").trim();
+    if (!raw) return;
+    withDiag++;
+    raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean).forEach(p => {
+      diagCounts[p] = (diagCounts[p] || 0) + 1;
+    });
+  });
+  const diagSorted = Object.entries(diagCounts).sort((a, b) => b[1] - a[1]);
+  const diagMax = Math.max(1, ...diagSorted.map(e => e[1]));
+  const sinDiag = state.ficha.length - withDiag;
+
+  // 7. Actividad mensual del curso académico actual
+  const startYear = academicYearStartYear(currentYearKey); // p.ej. 2025 para "25-26"
+  const monthBuckets = new Array(12).fill(0);
+  state.registro.forEach(r => {
+    if (r["Curso Académico"] !== currentYearKey) return;
+    const d = parseDate(r.Fecha);
+    if (!d) return;
+    const m = d.getMonth(); // 0-11
+    // sept (8) → 0, oct (9) → 1, ..., dic (11) → 3, ene (0) → 4, ..., ago (7) → 11
+    const bucket = (m - 8 + 12) % 12;
+    monthBuckets[bucket]++;
+  });
+  const monthMax = Math.max(1, ...monthBuckets);
+  const currentBucket = (now.getMonth() - 8 + 12) % 12;
+  const isCurrentYearActive = currentYearKey === academicYearFromDate(now);
+
+  // ----- HTML -----
+  const segBars = SEGUIMIENTO_VALUES.map(s => {
+    const c = segCounts[s] || 0;
+    const pct = (c / segMax) * 100;
+    return `
+      <div class="stat-bar-row">
+        <span>${escapeHtml(s)}</span>
+        <div class="bar"><div class="bar-fill ${segClass(s)}" style="width:${pct}%"></div></div>
+        <span class="count">${c}</span>
+      </div>`;
+  }).join("");
+
+  const cursoBars = cursoOrder.map(c => {
+    const v = cursoCounts[c];
+    const pct = (v / cursoMax) * 100;
+    return `
+      <div class="stat-bar-row">
+        <span>${escapeHtml(c)}</span>
+        <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <span class="count">${v}</span>
+      </div>`;
+  }).join("") || `<div class="stat-list-empty">Sin datos.</div>`;
+
+  const diagBars = diagSorted.length
+    ? diagSorted.slice(0, 15).map(([k, v]) => {
+        const pct = (v / diagMax) * 100;
+        return `
+          <div class="stat-bar-row">
+            <span>${escapeHtml(k)}</span>
+            <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <span class="count">${v}</span>
+          </div>`;
+      }).join("")
+      + (diagSorted.length > 15 ? `<div class="stat-list-meta" style="margin-top:8px">… y ${diagSorted.length - 15} más</div>` : "")
+      + (sinDiag > 0 ? `<div class="stat-list-meta" style="margin-top:6px">Sin diagnóstico registrado: ${sinDiag} alumno${sinDiag === 1 ? "" : "s"}</div>` : "")
+    : `<div class="stat-list-empty">Sin diagnósticos registrados.</div>`;
+
+  const especBars = especSorted.length
+    ? especSorted.slice(0, 12).map(([k, v]) => {
+        const pct = (v / especMax) * 100;
+        return `
+          <div class="stat-bar-row">
+            <span>${escapeHtml(k)}</span>
+            <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+            <span class="count">${v}</span>
+          </div>`;
+      }).join("") + (especSorted.length > 12 ? `<div class="stat-list-meta" style="margin-top:8px">… y ${especSorted.length - 12} más</div>` : "")
+    : `<div class="stat-list-empty">Sin datos.</div>`;
+
+  const monthHtml = `
+    <div class="month-chart">
+      ${monthBuckets.map((v, i) => {
+        const h = (v / monthMax) * 100;
+        const isCur = isCurrentYearActive && i === currentBucket;
+        return `<div class="month-col">
+          <span class="vcount">${v || ""}</span>
+          <div class="vbar ${isCur ? "current" : ""}" style="height:${h}%"></div>
+        </div>`;
+      }).join("")}
+    </div>
+    <div class="month-labels">${MONTH_LABELS_ES.map(m => `<span>${m}</span>`).join("")}</div>
+    <div class="stat-list-meta" style="margin-top:8px">Curso académico ${escapeHtml(currentYearKey)} · ${monthBuckets.reduce((a,b)=>a+b,0)} actuaciones</div>
+  `;
+
+  container.innerHTML = `
+    <div class="print-only print-header">
+      <div class="print-top">
+        <div class="print-centro">${escapeHtml(state.centroNombre || "")}</div>
+        <div class="print-confid">Documento confidencial — Departamento de Orientación</div>
+      </div>
+      <div class="print-title">Estadísticas de orientación</div>
+      <div class="print-date">Generado el ${escapeHtml(formatPrintTimestamp(new Date()))}</div>
+    </div>
+    <div class="stats-section-title">Operativa</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h4>Distribución por seguimiento</h4>
+        ${segBars}
+      </div>
+      <div class="stat-card">
+        <h4>Actuaciones</h4>
+        <div class="big-numbers">
+          <div class="big-number">
+            <div class="value">${actThisMonth}</div>
+            <div class="label">Este mes</div>
+            <div class="delta ${monthDelta > 0 ? "up" : monthDelta < 0 ? "down" : ""}">
+              ${monthDelta === 0 ? "=" : (monthDelta > 0 ? "▲ +" : "▼ ")}${Math.abs(monthDelta)} vs mes anterior
+            </div>
+          </div>
+          <div class="big-number">
+            <div class="value">${actThisYear}</div>
+            <div class="label">Curso ${escapeHtml(currentYearKey)}</div>
+          </div>
+          <div class="big-number">
+            <div class="value">${actLastMonth}</div>
+            <div class="label">Mes anterior</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <h4>Pendientes propios <span class="stat-list-meta">(${pendientes.length})</span></h4>
+        ${renderStudentList(pendientes, r => {
+          const meta = [r.Curso, r.Especialidad].filter(Boolean).join(" · ");
+          return escapeHtml(meta);
+        }, "No hay alumnos en espera de actuación nuestra.")}
+      </div>
+      <div class="stat-card">
+        <h4>Alertas: prioritarios sin actuación reciente <span class="stat-list-meta">(${alertas.length})</span></h4>
+        ${alertas.length
+          ? renderStudentList(alertas.map(x => x.r), (r, i) => {
+              const a = alertas[i];
+              return a.lastDate ? `Hace ${a.days} días` : "Sin actuaciones";
+            }, "")
+          : `<div class="stat-list-empty">Todos los prioritarios tienen actuación reciente.</div>`}
+      </div>
+    </div>
+
+    <div class="stats-section-title">Panorámica</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h4>Distribución por curso</h4>
+        ${cursoBars}
+      </div>
+      <div class="stat-card">
+        <h4>Distribución por especialidad</h4>
+        ${especBars}
+      </div>
+      <div class="stat-card full">
+        <h4>Diagnósticos <span class="stat-list-meta">(${withDiag} con diagnóstico de ${state.ficha.length})</span></h4>
+        ${diagBars}
+      </div>
+      <div class="stat-card full">
+        <h4>Actividad mensual</h4>
+        ${monthHtml}
+      </div>
+    </div>
+  `;
+
+  container.querySelectorAll(".stat-list-item[data-nia]").forEach(el => {
+    el.addEventListener("click", () => openDetail(el.dataset.nia));
+  });
+}
+
+function renderStudentList(students, metaFn, emptyMsg) {
+  if (!students.length) return `<div class="stat-list-empty">${escapeHtml(emptyMsg)}</div>`;
+  const max = 8;
+  const items = students.slice(0, max).map((r, i) => {
+    const apellidos = String(r.Apellidos || "").trim();
+    const nombre = String(r.Nombre || "").trim();
+    const name = [apellidos, nombre].filter(Boolean).join(", ") || r.NIA || "—";
+    return `
+      <div class="stat-list-item" data-nia="${escapeAttr(r.NIA)}">
+        <div><strong>${escapeHtml(name)}</strong></div>
+        <div class="stat-list-meta">${metaFn(r, i)}</div>
+      </div>`;
+  }).join("");
+  const more = students.length > max
+    ? `<div class="stat-list-more">… y ${students.length - max} más</div>`
+    : "";
+  return `<div class="stat-list">${items}${more}</div>`;
+}
+
+function byApellidosNombre(a, b) {
+  const ax = (String(a.Apellidos || "") + " " + String(a.Nombre || "")).toLowerCase();
+  const bx = (String(b.Apellidos || "") + " " + String(b.Nombre || "")).toLowerCase();
+  return ax < bx ? -1 : ax > bx ? 1 : 0;
+}
+
+function academicYearStartYear(key) {
+  const m = String(key || "").match(/^(\d{2})-(\d{2})$/);
+  return m ? 2000 + parseInt(m[1], 10) : new Date().getFullYear();
+}
+
+/* =========================================================================
+   Helpers
+   ========================================================================= */
+function parseDate(v) {
+  if (!v && v !== 0) return null;
+  if (v instanceof Date) return isNaN(v) ? null : v;
+  if (typeof v === "number") {
+    // Excel serial date
+    const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+    return isNaN(d) ? null : d;
+  }
+  if (typeof v === "string") {
+    const s = v.trim();
+    if (!s) return null;
+    // Try dd/mm/yyyy or dd-mm-yyyy
+    const m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/);
+    if (m) {
+      let [_, d, mo, y] = m;
+      if (y.length === 2) y = "20" + y;
+      const dt = new Date(+y, +mo - 1, +d);
+      if (!isNaN(dt)) return dt;
+    }
+    const dt = new Date(s);
+    return isNaN(dt) ? null : dt;
+  }
+  return null;
+}
+function formatPrintTimestamp(d) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm}/${yy} ${hh}:${mi}`;
+}
+function formatDate(v) {
+  const d = parseDate(v);
+  if (!d) return v ? String(v) : "";
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yy = d.getFullYear();
+  return `${dd}/${mm}/${yy}`;
+}
+function calcAge(v) {
+  const d = parseDate(v);
+  if (!d) return null;
+  const now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  const m = now.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+  return age >= 0 && age < 130 ? age : null;
+}
+function escapeHtml(s) {
+  if (s == null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+updateTopbar();
+
+const helpBtn = document.getElementById("helpBtn");
+const helpPopover = document.getElementById("helpPopover");
+document.getElementById("appVersionLabel").textContent = APP_VERSION;
+helpBtn.addEventListener("click", e => {
+  e.stopPropagation();
+  helpPopover.classList.toggle("open");
+});
+document.addEventListener("click", e => {
+  if (!helpPopover.contains(e.target) && e.target !== helpBtn) {
+    helpPopover.classList.remove("open");
+  }
+});
+
+function renderChangelog() {
+  const content = document.getElementById("changelogContent");
+  content.innerHTML = CHANGELOG.map(v => `
+    <div class="changelog-version">
+      <h3>Versión ${escapeHtml(v.version)} <span class="date">${escapeHtml(v.date)}</span></h3>
+      <ul>${v.changes.map(c => `<li>${escapeHtml(c)}</li>`).join("")}</ul>
+    </div>
+  `).join("");
+}
+const changelogModal = document.getElementById("changelogModal");
+document.getElementById("btnChangelog").addEventListener("click", e => {
+  e.stopPropagation();
+  helpPopover.classList.remove("open");
+  renderChangelog();
+  changelogModal.classList.add("open");
+});
+document.getElementById("changelogClose").addEventListener("click", () => {
+  changelogModal.classList.remove("open");
+});
+changelogModal.addEventListener("click", e => {
+  if (e.target === changelogModal) changelogModal.classList.remove("open");
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") changelogModal.classList.remove("open");
+});
+</script>
+</body>
+</html>
