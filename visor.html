@@ -290,6 +290,16 @@
   .chip-filter.active.s-activo { background: #dcefe4; color: #2e6b4a; border-color: #a8d2ba; }
   .chip-filter.active.s-pausa { background: #fbeed2; color: #8a6414; border-color: #e6cc8a; }
   .chip-filter.active.s-cerrado { background: #e3e6eb; color: #4a5260; border-color: #c1c7d0; }
+  .toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+  }
+  .toggle-label input[type=checkbox] { cursor: pointer; }
+  .toggle-label span { user-select: none; }
   @media (max-width: 700px) {
     .filter-group { width: 100%; }
   }
@@ -428,8 +438,125 @@
     grid-template-columns: minmax(180px, 1fr) minmax(0, 3fr);
     gap: 14px 28px;
   }
+  .erg-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px 24px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .status-chip {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .status-chip.st-si { background: #dcefe4; color: #2e6b4a; }
+  .status-chip.st-no { background: #e3e6eb; color: #4a5260; }
+  .status-chip.st-enproceso { background: #fbeed2; color: #8a6414; }
+
+  /* Informe */
+  .informe-btn-wrap {
+    margin-top: 16px;
+  }
+  .informe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: #eaf1fb;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .informe-btn:hover { background: var(--primary); color: #fff; }
+  .informe-section {
+    background: var(--primary-soft);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-top: 14px;
+    box-shadow: var(--shadow);
+    display: none;
+  }
+  .informe-section.open { display: block; }
+  .informe-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--primary);
+    flex-wrap: wrap;
+  }
+  .informe-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--primary);
+    border: none;
+    padding: 0;
+  }
+  .informe-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex: 1;
+  }
+  .informe-date-big {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .informe-nia {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  .informe-print {
+    padding: 6px 12px;
+    font-size: 16px;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    margin-left: auto;
+  }
+  .informe-print:hover { background: var(--primary); color: #fff; }
+  .informe-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 28px;
+  }
+  .informe-grid .ficha-field.wide { grid-column: 1 / -1; }
+  .informe-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 24px;
+    margin-bottom: 14px;
+  }
+  .informe-pair-title {
+    grid-column: 1 / -1;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  @media (max-width: 700px) {
+    .informe-grid, .informe-pair { grid-template-columns: 1fr; }
+  }
   @media (max-width: 700px) {
     .academic-row { grid-template-columns: 1fr; }
+    .erg-row { grid-template-columns: 1fr; }
   }
   .contact-section + .contact-section {
     border-top: 1px solid var(--border);
@@ -954,6 +1081,18 @@
     .ficha-field:has(.value.empty) { display: none !important; }
     .academic-row:not(:has(.ficha-field:not(:has(.value.empty)))) { display: none !important; }
     .entry-actions { display: none !important; }
+    .informe-btn-wrap { display: none !important; }
+    .informe-section {
+      display: block !important;
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      box-shadow: none !important;
+    }
+    .informe-section h3 {
+      color: #000 !important;
+      border-color: #000 !important;
+    }
+    .informe-pair-title { color: #000 !important; }
     /* Modo: imprimir solo una actuación */
     body.print-mode-entry .card:has(.academic-row),
     body.print-mode-entry details.collapsible,
@@ -965,6 +1104,57 @@
       font-size: 12pt;
       color: #555;
     }
+    /* Modo: imprimir solo informe */
+    body.print-mode-informe { font-size: 8.5pt !important; }
+    body.print-mode-informe .card:not(.ficha-hero),
+    body.print-mode-informe details.collapsible,
+    body.print-mode-informe .informe-btn-wrap,
+    body.print-mode-informe .card:has(.entry) { display: none !important; }
+    body.print-mode-informe .informe-section {
+      display: block !important;
+      background: #fff !important;
+      border: 1px solid #ccc !important;
+      box-shadow: none !important;
+      padding: 10px 12px !important;
+    }
+    body.print-mode-informe .informe-header {
+      border-color: #000 !important;
+      padding-bottom: 6px !important;
+      margin-bottom: 8px !important;
+      gap: 8px !important;
+    }
+    body.print-mode-informe .informe-header h3 { color: #000 !important; font-size: 10pt !important; }
+    body.print-mode-informe .informe-date-big { font-size: 12pt !important; }
+    body.print-mode-informe .informe-nia { font-size: 9pt !important; }
+    body.print-mode-informe .informe-print { display: none !important; }
+    body.print-mode-informe .informe-pair {
+      margin-bottom: 6px !important;
+      gap: 4px 14px !important;
+    }
+    body.print-mode-informe .informe-pair-title {
+      color: #000 !important;
+      font-size: 8pt !important;
+      margin-bottom: 0 !important;
+    }
+    body.print-mode-informe .ficha-field { gap: 1px !important; }
+    body.print-mode-informe .ficha-field .label { font-size: 7.5pt !important; }
+    body.print-mode-informe .ficha-field .value { font-size: 8.5pt !important; line-height: 1.35 !important; }
+    body.print-mode-informe .print-title::after {
+      content: " · Informe";
+      font-weight: 400;
+      font-size: 10pt;
+      color: #555;
+    }
+    body.print-mode-informe .print-header { margin-bottom: 8px !important; padding-bottom: 6px !important; }
+    body.print-mode-informe .print-header .print-title { font-size: 12pt !important; margin-top: 3px !important; }
+    body.print-mode-informe .print-header .print-date { font-size: 7.5pt !important; margin-top: 2px !important; }
+    body.print-mode-informe .print-header .print-centro { font-size: 7.5pt !important; }
+    body.print-mode-informe .print-header .print-confid { font-size: 7.5pt !important; }
+    body.print-mode-informe .ficha-hero { padding: 0 0 6px !important; margin-bottom: 6px !important; }
+    body.print-mode-informe .ficha-hero .hero-name { font-size: 13pt !important; }
+    body.print-mode-informe .ficha-hero .hero-nia { font-size: 10pt !important; }
+    body.print-mode-informe .ficha-hero .hero-meta { font-size: 9pt !important; }
+    body.print-mode-informe .ficha-hero .tags { display: none !important; }
     /* Stats en print */
     .stats-grid { gap: 10px !important; }
     .stat-card h4 { font-size: 9.5pt !important; margin-bottom: 10px !important; }
@@ -1129,7 +1319,7 @@
   <section class="screen" id="screenUpload">
     <div class="upload-wrap">
       <h2 style="margin-top:0">Registro de Orientación</h2>
-      <p style="color:var(--text-muted)">Carga el archivo Excel (.xlsx) con las hojas <strong>Sheet1</strong> (registro) y <strong>Ficha</strong>.</p>
+      <p style="color:var(--text-muted)">Carga el archivo Excel (.xlsx) con las hojas <strong>Sheet1</strong> (registro), <strong>Ficha</strong> e <strong>Informes</strong> (opcional).</p>
       <div id="errorBanner"></div>
       <div class="dropzone" id="dropzone">
         <div class="icon">📁</div>
@@ -1165,6 +1355,12 @@
           <div class="chip-filters" id="filterSituacion"></div>
         </div>
         <span class="count" id="listCount"></span>
+      </div>
+      <div class="toolbar-row" id="toggleIncompletas" style="display:none">
+        <label class="toggle-label">
+          <input type="checkbox" id="chkIncompletas">
+          <span>Incluir fichas pendientes de completar</span>
+        </label>
       </div>
     </div>
 
@@ -1221,8 +1417,20 @@
 /* =========================================================================
    State
    ========================================================================= */
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 const CHANGELOG = [
+  { version: "1.1", date: "2026-04-19", changes: [
+    "Nueva hoja «Informes» (opcional): lee informes de orientación vinculados por NIA con barreras/fortalezas de acceso, participación y aprendizaje, necesidades específicas y justificación.",
+    "Si hay varios informes para un mismo NIA, se muestra solo el de fecha más reciente.",
+    "Botón destacado «📄 Ver informe de orientación» en la ficha del alumno con fecha grande y NIA visible.",
+    "Impresión independiente del informe con tipografía compacta (8.5pt) para ocupar menos páginas.",
+    "Si un NIA existe en Informes pero no en Ficha, se crea ficha mínima automáticamente.",
+    "Nuevas columnas en Ficha: «Activada UEO?», «Autorización para Contactar ERG?» y «Contactado ERG?» con chips de estado (Sí/No/En Proceso).",
+    "Toggle «Incluir fichas pendientes de completar» para mostrar/ocultar fichas sin datos (solo NIA), ocultas por defecto.",
+    "Soporte del símbolo ¶ como salto de línea en cualquier campo de texto (compatibilidad con parsers de PDF).",
+    "Extracción del NIA más robusta: tolerante a variantes de nombre de columna entre hojas.",
+    "El filtro de Curso Académico ya no oculta alumnos sin actuaciones registradas."
+  ]},
   { version: "1.0", date: "2026-04-11", changes: [
     "Lanzamiento inicial del visor.",
     "Carga local de archivos Excel (.xlsx) sin subir nada a internet — los datos no salen del navegador.",
@@ -1251,8 +1459,10 @@ const EMPTY_KEY = "__empty__";
 const state = {
   registro: [],
   ficha: [],
+  informes: [],
   fichaByNia: {},
   registroByNia: {},
+  informeByNia: {},
   segOptions: [],
   sitOptions: [],
   filters: {
@@ -1261,7 +1471,8 @@ const state = {
     especialidad: "",
     seguimiento: new Set(),
     situacion: new Set(),
-    cursoAcad: ""
+    cursoAcad: "",
+    showIncompletas: false
   },
   sort: { key: "Seguimiento", dir: 1 },
   currentScreen: "screenHome",
@@ -1347,8 +1558,10 @@ function goHome() {
 function clearLoadedData() {
   state.registro = [];
   state.ficha = [];
+  state.informes = [];
   state.fichaByNia = {};
   state.registroByNia = {};
+  state.informeByNia = {};
   state.segOptions = [];
   state.sitOptions = [];
   state.activeTab = "alumnado";
@@ -1358,10 +1571,13 @@ function clearLoadedData() {
     especialidad: "",
     seguimiento: new Set(),
     situacion: new Set(),
-    cursoAcad: ""
+    cursoAcad: "",
+    showIncompletas: false
   };
   ["searchInput","filterCurso","filterEspecialidad","filterCursoAcad"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  const chk = document.getElementById("chkIncompletas");
+  if (chk) chk.checked = false;
   const fi = document.getElementById("fileInput");
   if (fi) fi.value = "";
   clearError();
@@ -1532,11 +1748,30 @@ function parseWorkbook(wb) {
   if (!sFic) throw new Error("No se encuentra la hoja 'Ficha'.");
   state.registro = XLSX.utils.sheet_to_json(sReg, { defval: "", raw: true });
   state.ficha = XLSX.utils.sheet_to_json(sFic, { defval: "", raw: true });
-  state.registro.forEach(r => {
-    if (r.NIA != null) r.NIA = String(r.NIA).trim();
-    normalizeRegistroRow(r);
-  });
-  state.ficha.forEach(r => { if (r.NIA != null) r.NIA = String(r.NIA).trim(); });
+  state.registro.forEach(r => { normalizeNia(r); normalizeRegistroRow(r); });
+  state.ficha.forEach(r => normalizeNia(r));
+
+  // Hoja Informes (opcional)
+  const sInf = findSheet(wb, "Informes") || findSheet(wb, "Informe");
+  if (sInf) {
+    state.informes = XLSX.utils.sheet_to_json(sInf, { defval: "", raw: true });
+    state.informes.forEach(r => normalizeNia(r));
+  } else {
+    state.informes = [];
+  }
+}
+
+function normalizeNia(row) {
+  if (row.NIA != null && row.NIA !== "") {
+    row.NIA = String(row.NIA).trim();
+    return;
+  }
+  for (const k of Object.keys(row)) {
+    if (normalizeKey(k) === "nia" && row[k] != null && row[k] !== "") {
+      row.NIA = String(row[k]).trim();
+      return;
+    }
+  }
 }
 
 function normalizeKey(s) {
@@ -1589,6 +1824,30 @@ function buildIndexes() {
   Object.values(state.registroByNia).forEach(list =>
     list.sort((a, b) => (parseDate(b.Fecha) || 0) - (parseDate(a.Fecha) || 0))
   );
+
+  // Informes: agrupar por NIA, quedarse con el más reciente
+  state.informeByNia = {};
+  state.informes.forEach(r => {
+    if (!r.NIA) return;
+    const dateKey = getField(r, "Fecha Informe", "Fecha");
+    const d = parseDate(dateKey);
+    const existing = state.informeByNia[r.NIA];
+    if (!existing) {
+      state.informeByNia[r.NIA] = r;
+    } else {
+      const ed = parseDate(getField(existing, "Fecha Informe", "Fecha"));
+      if (d && (!ed || d > ed)) state.informeByNia[r.NIA] = r;
+    }
+  });
+
+  // Crear fichas mínimas para NIAs que estén en informes pero no en ficha
+  Object.keys(state.informeByNia).forEach(nia => {
+    if (!state.fichaByNia[nia]) {
+      const stub = { NIA: nia };
+      state.ficha.push(stub);
+      state.fichaByNia[nia] = stub;
+    }
+  });
 }
 
 /* =========================================================================
@@ -1632,6 +1891,13 @@ function populateFilterOptions() {
   state.filters.seguimiento = new Set(state.segOptions);
   state.filters.situacion = new Set(state.sitOptions);
   renderChipFilters();
+
+  // Toggle de fichas incompletas: solo visible si hay stubs
+  const hasIncompletas = state.ficha.some(r => isFichaIncompleta(r));
+  const toggleWrap = document.getElementById("toggleIncompletas");
+  toggleWrap.style.display = hasIncompletas ? "flex" : "none";
+  const chk = document.getElementById("chkIncompletas");
+  chk.checked = state.filters.showIncompletas;
 }
 
 function renderChipFilters() {
@@ -1672,6 +1938,10 @@ function setOptions(id, placeholder, values) {
     renderList();
   });
 });
+document.getElementById("chkIncompletas").addEventListener("change", e => {
+  state.filters.showIncompletas = e.target.checked;
+  renderList();
+});
 
 document.querySelectorAll("#studentsTable thead th").forEach(th => {
   th.addEventListener("click", () => {
@@ -1691,6 +1961,10 @@ function getStudentSituacion(r) { return r["Situación"] || r.Situacion || ""; }
 function renderList() {
   const q = state.filters.search.trim().toLowerCase();
   let rows = state.ficha.slice();
+
+  if (!state.filters.showIncompletas) {
+    rows = rows.filter(r => !isFichaIncompleta(r));
+  }
 
   if (q) {
     rows = rows.filter(r => {
@@ -1715,7 +1989,10 @@ function renderList() {
         .filter(r => (r["Curso Académico"] || r["Curso Academico"]) === state.filters.cursoAcad)
         .map(r => r.NIA)
     );
-    rows = rows.filter(r => niasInYear.has(r.NIA));
+    rows = rows.filter(r => {
+      const hasAnyActs = (state.registroByNia[r.NIA] || []).length > 0;
+      return !hasAnyActs || niasInYear.has(r.NIA);
+    });
   }
 
   rows.sort((a, b) => {
@@ -1786,6 +2063,10 @@ function renderList() {
   });
 }
 
+function isFichaIncompleta(r) {
+  return !String(r.Nombre || "").trim() && !String(r.Apellidos || "").trim();
+}
+
 function seguimientoRank(s) {
   const idx = SEGUIMIENTO_VALUES.indexOf(s);
   return idx === -1 ? 99 : idx;
@@ -1813,12 +2094,14 @@ function openDetail(nia) {
   if (!r) return;
   const entries = state.registroByNia[nia] || [];
   const container = document.getElementById("detailContent");
-  container.innerHTML = renderFicha(r) + renderHistory(entries);
+  const informe = state.informeByNia[nia] || null;
+  container.innerHTML = renderFicha(r, informe) + renderHistory(entries);
   bindHistoryEvents();
+  bindInformeEvents();
   show("screenDetail");
 }
 
-function renderFicha(r) {
+function renderFicha(r, informe) {
   const age = calcAge(r["Fecha de nacimiento"]);
   const apellidos = String(r.Apellidos || "").trim();
   const nombre = String(r.Nombre || "").trim();
@@ -1901,7 +2184,13 @@ function renderFicha(r) {
         ${fichaField("Diagnóstico", r["Diagnóstico"] || r.Diagnostico)}
         ${fichaField("Campo Abierto", r["Campo Abierto"])}
       </div>
+      <div class="erg-row">
+        ${statusField("Activada UEO", r["Activada UEO?"] || r["Activada UEO"])}
+        ${statusField("Aut. contactar ERG", r["Autorización para Contactar ERG?"] || r["Autorización para Contactar ERG"] || r["Autorizacion para Contactar ERG?"] || r["Autorizacion para Contactar ERG"])}
+        ${statusField("Contactado ERG", r["Contactado ERG?"] || r["Contactado ERG"])}
+      </div>
     </div>
+    ${informe ? renderInformeButton() : ""}
     <details class="card collapsible">
       <summary><h3>Datos de contacto</h3></summary>
       <div class="contact-body">
@@ -1911,15 +2200,112 @@ function renderFicha(r) {
         ${padre}
       </div>
     </details>
+    ${informe ? renderInformeSection(informe) : ""}
   `;
+}
+
+function renderInformeButton() {
+  return `
+    <div class="informe-btn-wrap">
+      <button class="informe-btn" id="btnToggleInforme">📄 Ver informe de orientación</button>
+    </div>`;
+}
+
+function renderInformeSection(inf) {
+  const fecha = formatDate(getField(inf, "Fecha Informe", "Fecha"));
+  const PAIRS = [
+    ["Acceso",
+      getField(inf, "Barreras Acceso"),
+      getField(inf, "Fortalezas Acceso")],
+    ["Participación",
+      getField(inf, "Barreras Participación"),
+      getField(inf, "Fortalezas Participación")],
+    ["Aprendizaje",
+      getField(inf, "Barreras Aprendizaje"),
+      getField(inf, "Fortalezas Aprendizaje")],
+  ];
+
+  const pairsHtml = PAIRS.map(([area, barreras, fortalezas]) => `
+    <div class="informe-pair">
+      <div class="informe-pair-title">${escapeHtml(area)}</div>
+      ${fichaField("Barreras", barreras)}
+      ${fichaField("Fortalezas", fortalezas)}
+    </div>
+  `).join("");
+
+  const necesidades = getField(inf, "Necesidades específicas de apoyo educativo",
+    "Necesidades especificas de apoyo educativo", "Necesidades");
+  const justificacion = getField(inf, "Justificación y orientaciones",
+    "Justificacion y orientaciones", "Justificación", "Justificacion");
+
+  const nia = inf.NIA || "";
+  return `
+    <div class="informe-section" id="informeSection">
+      <div class="informe-header">
+        <h3>📄 Informe de orientación</h3>
+        <div class="informe-meta">
+          <span class="informe-date-big">${escapeHtml(fecha)}</span>
+          <span class="informe-nia">NIA ${escapeHtml(nia)}</span>
+        </div>
+        <button class="informe-print" id="btnPrintInforme" title="Imprimir informe">🖨</button>
+      </div>
+      ${pairsHtml}
+      ${necesidades ? `<div class="informe-pair">
+        <div class="informe-pair-title">Necesidades específicas de apoyo educativo</div>
+        <div style="grid-column:1/-1">${fichaField("", necesidades, true)}</div>
+      </div>` : ""}
+      ${justificacion ? `<div class="informe-pair">
+        <div class="informe-pair-title">Justificación y orientaciones</div>
+        <div style="grid-column:1/-1">${fichaField("", justificacion, true)}</div>
+      </div>` : ""}
+    </div>
+  `;
+}
+
+function bindInformeEvents() {
+  const btn = document.getElementById("btnToggleInforme");
+  const section = document.getElementById("informeSection");
+  if (!btn || !section) return;
+  btn.addEventListener("click", () => {
+    section.classList.toggle("open");
+    btn.textContent = section.classList.contains("open")
+      ? "📄 Ocultar informe de orientación"
+      : "📄 Ver informe de orientación";
+  });
+  const printBtn = document.getElementById("btnPrintInforme");
+  if (printBtn) {
+    printBtn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (!promptCentro()) return;
+      section.classList.add("open");
+      document.body.classList.add("print-mode-informe");
+      const cleanup = () => {
+        document.body.classList.remove("print-mode-informe");
+        window.removeEventListener("afterprint", cleanup);
+      };
+      window.addEventListener("afterprint", cleanup);
+      window.print();
+    });
+  }
 }
 function fichaField(label, value, wide = false) {
   const isEmpty = value === "" || value == null;
   const cls = "ficha-field" + (wide ? " wide" : "");
   const val = isEmpty
     ? `<span class="value empty">—</span>`
-    : `<span class="value">${typeof value === "string" && value.startsWith("<") ? value : escapeHtml(String(value))}</span>`;
+    : `<span class="value">${typeof value === "string" && value.startsWith("<") ? value : formatText(String(value))}</span>`;
   return `<div class="${cls}"><span class="label">${escapeHtml(label)}</span>${val}</div>`;
+}
+function statusField(label, value) {
+  const raw = String(value || "").trim();
+  if (!raw) return fichaField(label, "");
+  const norm = raw.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  let cls = "";
+  if (norm.startsWith("si") || norm === "sí") cls = "st-si";
+  else if (norm === "no") cls = "st-no";
+  else if (norm.includes("proceso")) cls = "st-enproceso";
+  const chip = `<span class="status-chip ${cls}">${escapeHtml(raw)}</span>`;
+  return `<div class="ficha-field"><span class="label">${escapeHtml(label)}</span><span class="value">${chip}</span></div>`;
 }
 function mailLink(m) {
   if (!m) return "";
@@ -1953,8 +2339,8 @@ function renderHistory(entries) {
           <span class="caret">▶</span>
         </div>
         <div class="entry-body">
-          ${desc ? `<div class="field"><div class="label">Descripción</div><div class="value">${escapeHtml(desc)}</div></div>` : ""}
-          ${otros ? `<div class="field"><div class="label">Otros</div><div class="value">${escapeHtml(otros)}</div></div>` : ""}
+          ${desc ? `<div class="field"><div class="label">Descripción</div><div class="value">${formatText(desc)}</div></div>` : ""}
+          ${otros ? `<div class="field"><div class="label">Otros</div><div class="value">${formatText(otros)}</div></div>` : ""}
           ${link ? renderPdfBlock(link) : ""}
           <div class="entry-actions">
             <button class="entry-print">🖨 Imprimir esta actuación</button>
@@ -2369,6 +2755,9 @@ function escapeHtml(s) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+function formatText(s) {
+  return escapeHtml(String(s)).replace(/\s*¶\s*/g, "<br>");
 }
 function escapeAttr(s) { return escapeHtml(s); }
 
