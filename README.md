@@ -36,7 +36,7 @@ El demo incluye 15 alumnos ficticios con casos variados (prioritarios, alertas d
 
 El sistema son tres piezas: **Microsoft Forms** escribe, un **libro de Excel en OneDrive** almacena, y `visor.html` lee. El visor no se conecta a OneDrive ni a SharePoint: lee un archivo que esté en el disco del ordenador.
 
-Lo que sigue es el montaje completo. **El orden importa**, y por un motivo concreto: el emparejado entre un formulario y su libro de respuestas nace con la creación y **no se puede establecer después** — no existe en ninguna pantalla un «conectar este formulario a este libro». Y el libro nace donde vive el formulario.
+La clave del montaje es **crear el libro antes que el formulario**. Hecho en ese orden, el libro nace ya en su carpeta definitiva y con sus hojas dentro, y no hay que mover nada ni copiar nada después.
 
 ### 1. Decidir quién es el propietario
 
@@ -48,17 +48,25 @@ Que el formulario pertenezca a una **cuenta institucional del centro**, no a la 
 
 Lo que se registra son datos de salud de menores. Y el enlace del formulario es el único control que existe: **no caduca, no se revoca por persona y se reenvía sin dejar rastro**. Repartirlo al claustro entero es, en la práctica, publicarlo.
 
-La recomendación es dejarlo en **dos o tres personas nombradas** — por ejemplo jefatura de estudios y coordinación de orientación/inclusión. Quien detecte algo lo traslada por la vía ordinaria y lo registra quien tiene el enlace. Se pierde inmediatez y se gana un registro homogéneo y un círculo de acceso pequeño y nombrable.
+La recomendación es dejarlo en **dos o tres personas nombradas** — por ejemplo jefatura de estudios y coordinación de orientación/inclusión. Quien detecte algo lo traslada por la vía ordinaria y lo registra quien tiene el enlace.
 
-### 3. Crear la carpeta
+### 3. Crear la carpeta y poner el libro dentro
 
-En el OneDrive de la cuenta propietaria, una carpeta para todo el sistema. Dos criterios: **sin tildes ni espacios**, porque el nombre acaba formando parte de una ruta de SharePoint; y **sin año ni curso** en el nombre, porque el registro es continuo.
+Con la sesión de la cuenta propietaria, una carpeta en su OneDrive para todo el sistema. Dos criterios: **sin tildes ni espacios**, porque el nombre acaba formando parte de una ruta de SharePoint; y **sin año ni curso**, porque el registro es continuo.
 
-Los adjuntos del formulario **no** caerán aquí: Forms usa una carpeta propia (paso 8).
+Dentro, sube [`plantilla-hojas.xlsx`](plantilla-hojas.xlsx) y renómbralo con el nombre que quieras darle al libro. **Ese es el libro del registro**: ya trae `Ficha`, `Informes`, `Anuladas` y `Listas`, con sus siete desplegables funcionando.
 
-### 4. Crear el formulario: seis preguntas
+### 4. Crear el formulario desde el libro
 
-Con la sesión de la cuenta propietaria abierta en forms.office.com. **El título de cada pregunta se convierte en el nombre de su columna**, así que estos son los textos literales, en este orden:
+Abre el libro en **Excel para la web** y usa **Insertar → Formularios → Nuevo formulario**. El formulario nace emparejado con ese libro, y Forms le añade su propia hoja de respuestas.
+
+**No importa cómo la llame** —`Sheet1`, `Hoja1`, `Form1`—: el visor la reconoce por sus columnas.
+
+El emparejado entre un formulario y su libro **nace con la creación y no se puede establecer después**: no existe en ninguna pantalla un «conectar este formulario a este libro». Por eso este paso va aquí y no antes.
+
+### 5. Las seis preguntas
+
+**El título de cada pregunta se convierte en el nombre de su columna**, así que estos son los textos literales, en este orden:
 
 ```
 NIA
@@ -71,7 +79,7 @@ Otros
 
 | Pregunta | Tipo | Notas |
 |---|---|---|
-| NIA | Texto | Obligatoria. Es la llave que une las tres hojas |
+| NIA | Texto | Obligatoria. Es la llave que une las hojas |
 | Tipo de Entrada | Opción | Obligatoria, **de una sola respuesta** |
 | Título/Asunto | Texto | Obligatoria |
 | Descripción | Texto, respuesta larga | |
@@ -82,38 +90,34 @@ Las siete opciones de `Tipo de Entrada` que el visor muestra **con color propio*
 
 **No preguntes la fecha, ni el curso académico, ni quién registra.** Los tres los pone el sistema: los dos primeros los calcula el visor desde `Hora de inicio`, y el tercero lo autorrellena Forms.
 
-### 5. Los dos ajustes que sostienen la autoría
+### 6. Los dos ajustes que sostienen la autoría
 
-En la configuración del formulario, **antes de crear el libro**:
+En la configuración del formulario:
 
 - Respuestas **restringidas a la organización**.
 - **Registrar el nombre** de quien responde.
 
-Sin los dos, las columnas `Nombre` y `Correo electrónico` llegan vacías y el registro pierde el dato de **quién hizo cada actuación**, que es la mitad de su valor. Y el orden importa: las columnas del libro se generan a partir del formulario, así que un libro creado mientras las respuestas son anónimas nace sin ellas.
+Sin los dos, las columnas `Nombre` y `Correo electrónico` llegan vacías y el registro pierde el dato de **quién hizo cada actuación**, que es la mitad de su valor.
 
-> ⚠️ **Que nadie rellene el formulario con la sesión de la cuenta institucional abierta.** La columna `Nombre` recoge a quien **envía** la respuesta: enviada desde la cuenta del centro, la actuación queda firmada por el centro y se pierde quién la hizo.
+> ⚠️ **Que nadie rellene el formulario con la sesión de la cuenta institucional abierta.** La columna `Nombre` recoge a quien **envía** la respuesta: enviada desde la cuenta del centro, la actuación queda firmada por el centro.
 
-### 6. Dejar que Forms cree el libro
-
-**Respuestas → Abrir en Excel.** El libro nace sincronizado en vivo —cada respuesta nueva aparece sola, sin exportar nada— y con la hoja de respuestas llamada `Sheet1`, que es el nombre que busca el visor.
-
-**No lo crees tú.** Excel para la web permite lo contrario, crear el libro primero y engancharle un formulario, pero un libro en blanco creado desde una interfaz en castellano tiene la hoja llamada `Hoja1`.
-
-Después, **mueve el libro a tu carpeta**. El vínculo con el formulario va por identificador del elemento y no por ruta, así que sobrevive a un movimiento dentro del mismo OneDrive. Hazlo antes de recoger respuestas reales.
-
-> Si el libro no se actualiza solo y hay que volver a pedir *Abrir en Excel* cada vez, no tienes sincronización en vivo y el resto del proceso no funciona como está descrito.
-
-### 7. Las hojas `Ficha`, `Informes`, `Anuladas` y `Listas`
-
-Se trasplantan desde `plantilla-hojas.xlsx` — ver [Estructura del Excel esperado](#estructura-del-excel-esperado). No las crees a mano.
-
-### 8. El visor, los permisos y la sincronización
+### 7. El visor, los permisos y la sincronización
 
 Guarda `visor.html` en la misma carpeta que el libro, y comparte esa carpeta con las personas del círculo **con permiso de edición** (tienen que escribir en `Ficha`). Cada una, en su ordenador: **Añadir acceso directo a Mis archivos** → si hay sincronización selectiva, **Elegir carpetas** y marcarla → clic derecho → **Mantener siempre en este dispositivo**.
 
 A partir de ahí: doble clic en `visor.html`, elegir el libro de al lado, consultar. Sin exportar ni descargar nada.
 
-**Y el permiso que nadie adivina: la carpeta de los adjuntos.** Forms no guarda los archivos subidos en tu carpeta, sino en una ruta propia del OneDrive de la cuenta propietaria:
+> ⚠️ **El libro no se abre nunca con el Excel de escritorio.** El archivo tiene que estar en el disco para que el visor lo lea, pero se edita **siempre en Excel para la web**. Si se abre en el escritorio y resulta ser una copia bajada, Excel ofrece activar el autoguardado y pregunta dónde ponerlo: aceptar crea un libro separado que Forms ya no alimenta, con el mismo nombre y ninguna señal de cuál es el bueno.
+
+### 8. Comprobar que funciona
+
+Con [`ejemplo-ficticio.docx`](ejemplo-ficticio.docx): una ficha, un informe y una actuación inventados, y las siete comprobaciones a hacer en el visor. **Adjunta un PDF** a la actuación de prueba: hace falta para el paso siguiente.
+
+Al terminar se borra la fila de prueba de `Ficha` y de `Informes`, y **se deja la de la hoja de respuestas**: sin ficha, el visor no la muestra en ninguna parte.
+
+### 9. El permiso que nadie adivina: la carpeta de los adjuntos
+
+Forms no guarda los archivos subidos en tu carpeta, sino en una ruta propia del OneDrive de la cuenta propietaria:
 
 ```
 Aplicaciones  ›  Microsoft Forms  ›  [nombre del formulario]  ›  [pregunta]
@@ -124,23 +128,19 @@ Quien tenga acceso a la carpeta del registro pero no a esta verá el libro, edit
 Tres cosas que ayudan:
 
 - Para llegar a la carpeta: en el formulario, **Respuestas → la pregunta de archivos → Más detalles → Ver en carpeta**. Mejor que navegar a mano, porque **la carpeta conserva el nombre que tenía el formulario cuando se creó la pregunta**, no el actual.
-- **No existe hasta la primera subida**: comparte después de haber adjuntado algo.
+- **No existe hasta la primera subida**: por eso este paso va después de la comprobación.
 - Comparte **la carpeta del nombre del formulario**, no la de la pregunta, con **lectura**: así una segunda pregunta de archivos heredará el permiso.
 
 Microsoft no documenta el modelo de permisos de estas carpetas, así que la única comprobación que vale es que **la otra persona abra un adjunto desde su propia cuenta**. Que lo abra quien concedió el permiso no prueba nada.
 
-### 9. Comprobar que funciona
-
-Con [`ejemplo-ficticio.docx`](ejemplo-ficticio.docx): una ficha, un informe y una actuación inventados, y las siete comprobaciones a hacer en el visor. Al terminar se borra la fila de prueba de `Ficha` y de `Informes`, y **se deja la de `Sheet1`**: sin ficha, el visor no la muestra en ninguna parte, y así no hay que borrar filas de la hoja que escribe Forms.
-
 ### Reglas que no conviene romper
 
-1. **`Sheet1` no se toca**: la escribe Forms. Ni renombrar columnas, ni reordenarlas, ni insertar una en medio, ni ordenar las filas. Si hace falta un cálculo, va en otra hoja.
+1. **La hoja de respuestas no se toca**: la escribe Forms. Ni renombrar columnas, ni reordenarlas, ni insertar una en medio, ni ordenar las filas.
    **Y borrar filas ahí no funciona**: el vínculo con Forms solo añade, y las restaura en cuanto llega la siguiente respuesta. Borrar la respuesta dentro de Forms tampoco las quita. Para retirar una actuación, su `Id` va a la hoja `Anuladas`.
-2. **No se edita una copia descargada.** Las hojas mantenidas a mano se editan en Excel para la web, o abriendo el archivo de la carpeta sincronizada. Una copia aparte no vuelve a ningún sitio.
-3. **El formulario no se recrea.** Uno nuevo nace con un libro nuevo y vacío, y `Ficha` e `Informes` se quedan en el viejo.
+2. **El libro se edita siempre en Excel para la web**, nunca con el Excel de escritorio ni en una copia descargada.
+3. **El formulario no se recrea.** Uno nuevo nace con un libro nuevo y vacío, y `Ficha`, `Informes` y `Anuladas` se quedan en el viejo.
 4. **El formulario no se abre a respuestas anónimas**, o se pierde la autoría.
-5. **Nombres de columna exactos** en `Ficha` e `Informes`: un nombre distinto no da error, da una columna vacía.
+5. **Nombres de columna exactos** en `Ficha`, `Informes` y `Anuladas`: un nombre distinto no da error, da una columna vacía.
 
 ### Lo que hay que revisar cada curso
 
@@ -173,15 +173,11 @@ Consulta el detalle completo de cambios desde el botón `?` (esquina inferior de
 
 ## Estructura del Excel esperado
 
-> **Atajo para no cometer erratas:** descarga [`plantilla-hojas.xlsx`](plantilla-hojas.xlsx), que trae cuatro hojas listas: `Ficha` con sus cabeceras y **siete columnas con desplegable**, `Informes` y `Anuladas` con las suyas, y `Listas` con los valores admitidos (incluidas las **40 especialidades oficiales**, 36 de música y 4 de danza). El visor ignora la hoja `Listas`.
+> **La plantilla no se copia: es el libro.** [`plantilla-hojas.xlsx`](plantilla-hojas.xlsx) trae las cuatro hojas ya hechas —`Ficha` con sus cabeceras y **siete columnas con desplegable**, `Informes` y `Anuladas` con las suyas, y `Listas` con los valores admitidos—. Se sube a la carpeta, se renombra, y el formulario se crea desde ella. Así las hojas y sus desplegables llegan intactos, sin copiar nada de un libro a otro.
 >
-> En el **Excel de escritorio**, con los dos libros abiertos: clic derecho en la pestaña de la plantilla → **Mover o copiar…** → *Al libro*: tu libro → marcar **Crear una copia**. Las cuatro, y `Listas` no es opcional: los desplegables de `Ficha` apuntan a sus rangos. Así las hojas llegan enteras, con su nombre ya puesto, y no hay que crearlas antes — si ya existe una hoja `Ficha`, la copia entra como `Ficha (2)` y el visor no la encuentra.
+> El visor ignora la hoja `Listas`. Para **recortar** las listas a lo que imparte tu centro, borra **filas enteras** ahí; para **añadir**, inserta una fila **dentro** de la lista, no después de la última. Los rangos se ajustan solos al insertar o borrar filas, pero una celda vaciada deja un hueco en el desplegable y una fila añadida al final se queda fuera.
 >
-> En **Excel para la web** no existe *Mover o copiar* entre libros: hay que crear las hojas a mano y pegar **toda la hoja** de la plantilla en `A1`, empezando por `Listas` para que las validaciones encuentren sus rangos, y comprobando después que los desplegables han sobrevivido.
->
-> Para **recortar** las listas a lo que imparte tu centro, borra **filas enteras** de la hoja `Listas`; para **añadir**, inserta una fila **dentro** de la lista, no después de la última. Los rangos se ajustan solos al insertar o borrar filas, pero una celda vaciada deja un hueco en el desplegable y una fila añadida al final se queda fuera.
->
-> Conviene, porque las columnas de `Ficha` se leen **por nombre exacto**: un `Telefono Alumno` sin tilde o un `Tutor` sin `/a` dejan la columna vacía sin avisar de nada. Las de `Sheet1`, en cambio, admiten variantes.
+> Importa porque las columnas de `Ficha` se leen **por nombre exacto**: un `Telefono Alumno` sin tilde o un `Tutor` sin `/a` dejan la columna vacía sin avisar de nada. Las de la hoja de respuestas, en cambio, admiten variantes.
 
 ### Hoja de registro (la que genera Microsoft Forms)
 
@@ -220,7 +216,8 @@ Valores admitidos:
 - **Curso**: 1 EEM, 2 EEM, 3 EEM, 4 EEM, 1 EPM, 2 EPM, 3 EPM, 4 EPM, 5 EPM, 6 EPM
 - **Seguimiento**: Prioritario, Activo, Pausa, Cerrado
 - **Situación**: Espera de actuación/respuesta nuestra, En espera de actuación/respuesta de otros, Ninguno
-- **Especialidad**: las 40 del catálogo oficial — 36 de las enseñanzas profesionales de música ([Decreto 158/2007](https://dogv.gva.es/es/eli/es-vc/d/2007/09/21/158), art. 6, texto consolidado) y 4 de danza ([Decreto 156/2007](https://dogv.gva.es/es/eli/es-vc/d/2007/09/21/156), art. 6). Se respeta la grafía del decreto, que mezcla idiomas: `Cant valencià`, `Violoncello`. El visor no las valida —acepta cualquier texto— pero mantenerlas uniformes evita duplicados en los filtros y en la estadística.
+- **Especialidad**: 41 valores. Las 40 del catálogo oficial — 36 de las enseñanzas profesionales de música ([Decreto 158/2007](https://dogv.gva.es/es/eli/es-vc/d/2007/09/21/158), art. 6, texto consolidado) y 4 de danza ([Decreto 156/2007](https://dogv.gva.es/es/eli/es-vc/d/2007/09/21/156), art. 6) — más un **`Danza`** a secas que no está en ningún decreto: las enseñanzas **elementales** de danza no tienen especialidades, solo asignaturas ([Decreto 157/2007](https://dogv.gva.es/es/eli/es-vc/d/2007/09/21/157), art. 5), así que no hay ninguna que elegir. En música no hace falta la equivalente, porque en elemental ya hay especialidad desde primero: el instrumento.
+  Se respeta la grafía del decreto, que mezcla idiomas: `Cant valencià`, `Violoncello`. El visor no las valida —acepta cualquier texto— pero mantenerlas uniformes evita duplicados en los filtros y en la estadística.
 - **Diagnóstico**: texto libre. Admite múltiples valores separados por coma o punto y coma (p. ej. `TDAH, ansiedad`) — el contador de la pestaña de Estadística los cuenta por separado.
 - **Activada UEO?**, **Autorización para Contactar ERG?** y **Contactado ERG?**: Sí, No, En Proceso.
 - La **edad** se calcula automáticamente desde la fecha de nacimiento.

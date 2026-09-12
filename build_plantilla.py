@@ -51,13 +51,20 @@ ESPECIALIDADES_DANZA = [
     "Baile flamenco", "Danza clásica", "Danza contemporánea", "Danza española",
 ]
 
+# «Danza» a secas, que no está en ningún decreto, para el alumnado de las
+# enseñanzas ELEMENTALES de danza: el Decreto 157/2007 no fija especialidades
+# para ese nivel, solo asignaturas (art. 5), así que no hay ninguna que elegir.
+# En música no hace falta la equivalente: las elementales sí tienen especialidad
+# desde primero, que es el instrumento.
+ESPECIALIDAD_GENERICA = ["Danza"]
+
 # Cada lista cerrada: columna de la hoja Listas → (rótulo, valores, columnas de
 # Ficha que la usan).
 LISTAS = [
     ("Curso", ["1 EEM", "2 EEM", "3 EEM", "4 EEM", "1 EPM",
                "2 EPM", "3 EPM", "4 EPM", "5 EPM", "6 EPM"],
      ["Curso"]),
-    ("Especialidad", ESPECIALIDADES_MUSICA + ESPECIALIDADES_DANZA,
+    ("Especialidad", ESPECIALIDADES_MUSICA + ESPECIALIDAD_GENERICA + ESPECIALIDADES_DANZA,
      ["Especialidad"]),
     ("Seguimiento", ["Prioritario", "Activo", "Pausa", "Cerrado"],
      ["Seguimiento"]),
@@ -127,7 +134,7 @@ def main():
     print(f"  Anuladas: {len(ANULADAS_HEADERS)} columnas")
     print(f"  Listas:   {len(LISTAS)} listas — "
           f"{len(ESPECIALIDADES_MUSICA)} especialidades de música + "
-          f"{len(ESPECIALIDADES_DANZA)} de danza")
+          f"{len(ESPECIALIDADES_DANZA)} de danza + «Danza» genérica")
 
 
 if __name__ == "__main__":
