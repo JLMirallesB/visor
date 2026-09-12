@@ -133,7 +133,7 @@ ficha_rows = [
      "Col·legi La Pureza","612345015","noa.vazquez@ej.es",
      "Sonia Peña","612345115","sonia.pena@ej.es",
      "","","",
-     "Elena Torres","TEA leve","Prioritario","Espera de actuación/respuesta nuestra",
+     "Elena Torres","TEA","Prioritario","Espera de actuación/respuesta nuestra",
      "Adaptaciones metodológicas en la clase colectiva. Coordinación con orientadora del IES.",
      "Sí","Sí","En Proceso"],
 ]
@@ -293,11 +293,13 @@ def build_registro_rows():
 # ---------------------------------------------------------------------------
 # Hoja "Informes"
 # ---------------------------------------------------------------------------
+# Mismo orden y mismos nombres que el XLS de informe2MD, para que un bloque de
+# filas se pegue aquí columna por columna.
 INFORME_HEADERS = [
     "NIA","Fecha Informe","Barreras Acceso","Fortalezas Acceso",
     "Barreras Participación","Fortalezas Participación",
     "Barreras Aprendizaje","Fortalezas Aprendizaje",
-    "Necesidades específicas de apoyo educativo","Justificación y orientaciones"
+    "Necesidades de apoyo","Justificación y orientaciones","Centro Docente"
 ]
 
 informe_rows = [
@@ -309,8 +311,9 @@ informe_rows = [
      "Participación activa cuando se le asigna un rol claro.",
      "Bajo rendimiento en lectura de partituras a primera vista.",
      "Excelente oído y capacidad memorística para repertorio.",
-     "Alumna con TDAH que necesita adaptaciones en la gestión del tiempo, descansos pautados y refuerzo de la lectura musical.",
-     "Se recomienda fragmentar las tareas, usar señales visuales y coordinar con la tutora del IES para mantener las mismas estrategias."],
+     "TDAH: Déficit de atención",
+     "Se recomienda fragmentar las tareas, usar señales visuales y coordinar con la tutora del IES para mantener las mismas estrategias.",
+     "IES Joanot Martorell"],
 
     # Carla 10005 — TDAH + ansiedad (informe más antiguo)
     [10005, datetime(2025, 11, 20),
@@ -320,8 +323,9 @@ informe_rows = [
      "Buena interacción con compañeros/as en ensayos de cámara.",
      "Dificultad para generalizar lo aprendido a contextos nuevos.",
      "Creatividad destacable en improvisación y composición libre.",
-     "Alumna con TDAH y ansiedad que requiere adaptación de las condiciones de evaluación, apoyo emocional continuado y coordinación con profesional externo.",
-     "Se aconseja permitir evaluaciones en entorno controlado, avisar con antelación de las audiciones y mantener comunicación regular con la familia."],
+     "TDAH: Combinado",
+     "Se aconseja permitir evaluaciones en entorno controlado, avisar con antelación de las audiciones y mantener comunicación regular con la familia.",
+     "IES Joanot Martorell"],
 
     # Carla 10005 — informe más reciente (debe prevalecer este)
     [10005, datetime(2026, 2, 10),
@@ -331,8 +335,9 @@ informe_rows = [
      "Participa activamente en pequeño grupo; ha mejorado el trabajo cooperativo.",
      "Lectura a primera vista aún por debajo del nivel esperado.",
      "Rendimiento técnico bueno; musicalidad e interpretación expresiva destacadas.",
-     "Se mantienen las necesidades del primer informe. Se añade la necesidad de un plan gradual de exposición a situaciones de interpretación pública.",
-     "Continuar con el protocolo de evaluación adaptada. Iniciar exposición progresiva a audiciones (primero en grupo, luego individual). Coordinación trimestral con la psicóloga externa."],
+     "TDAH: Combinado ¶ Trastorno mental grave",
+     "Continuar con el protocolo de evaluación adaptada. Iniciar exposición progresiva a audiciones (primero en grupo, luego individual). Coordinación trimestral con la psicóloga externa.",
+     "IES Joanot Martorell"],
 
     # Sofía 10009 — Dislexia + ansiedad
     [10009, datetime(2025, 12, 5),
@@ -342,8 +347,9 @@ informe_rows = [
      "Compañerismo y disposición a ayudar a otros.",
      "Lentitud en la lectura de partituras y dificultad con la nomenclatura convencional.",
      "Gran sensibilidad interpretativa y buena respuesta a metodologías prácticas.",
-     "Alumna con dislexia y ansiedad asociada que necesita materiales adaptados (tipografía, espaciado, colores) y metodología centrada en lo auditivo-práctico.",
-     "Proporcionar partituras con tipografía OpenDyslexic, ampliar los plazos de entrega y priorizar la evaluación práctica sobre la escrita."],
+     "DEA: Lectura",
+     "Proporcionar partituras con tipografía OpenDyslexic, ampliar los plazos de entrega y priorizar la evaluación práctica sobre la escrita.",
+     "IES Les Moreres"],
 
     # Noa 10015 — TEA leve
     [10015, datetime(2026, 1, 18),
@@ -353,8 +359,9 @@ informe_rows = [
      "Una vez integrada, participa con entusiasmo y aporta ideas originales.",
      "Puede perder el hilo en sesiones con múltiples cambios de actividad.",
      "Excelente capacidad de concentración cuando la tarea es clara y estructurada.",
-     "Alumna con TEA leve que requiere anticipación de cambios, instrucciones explícitas y material visual de apoyo.",
-     "Usar apoyos visuales (horarios, secuencias), anticipar los cambios de actividad con al menos 5 minutos, y coordinar con la orientadora del IES las adaptaciones."],
+     "TEA",
+     "Usar apoyos visuales (horarios, secuencias), anticipar los cambios de actividad con al menos 5 minutos, y coordinar con la orientadora del IES las adaptaciones.",
+     "Col·legi La Pureza"],
 
     # NIA 10099 — Solo existe en Informes, NO tiene ficha
     [10099, datetime(2026, 2, 20),
@@ -364,8 +371,9 @@ informe_rows = [
      "Buena relación con el grupo clase.",
      "Rendimiento irregular por absentismo justificado.",
      "Capacidad de trabajo autónomo cuando dispone de material adaptado.",
-     "Alumno/a con necesidades de apoyo por situación sociofamiliar compleja. ¶ Requiere flexibilización horaria y seguimiento de asistencia.",
-     "Coordinar con servicios sociales. ¶ Permitir asistencia flexible y facilitar materiales para trabajo autónomo."],
+     "Desventaja socioeconómica ¶ Incorporación tardía",
+     "Coordinar con servicios sociales. ¶ Permitir asistencia flexible y facilitar materiales para trabajo autónomo.",
+     "IES Pere Boïl"],
 
     # Hugo 10002 — Dislexia
     [10002, datetime(2026, 3, 1),
@@ -375,8 +383,9 @@ informe_rows = [
      "Participación activa en debates y actividades orales.",
      "Errores frecuentes en la escritura de dictados musicales.",
      "Memoria auditiva excelente; reproduce fragmentos complejos tras escucharlos.",
-     "Alumno con dislexia que necesita adaptaciones en la presentación del material escrito y evaluación preferentemente oral o práctica.",
-     "Ampliar tiempos de lectura, usar partituras con mayor espaciado y facilitar grabaciones de audio como complemento al material escrito."],
+     "DEA: Lectura",
+     "Ampliar tiempos de lectura, usar partituras con mayor espaciado y facilitar grabaciones de audio como complemento al material escrito.",
+     "IES Pere Boil"],
 ]
 
 

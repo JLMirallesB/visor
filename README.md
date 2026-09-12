@@ -232,12 +232,17 @@ NIA | Fecha Informe |
 Barreras Acceso | Fortalezas Acceso |
 Barreras Participación | Fortalezas Participación |
 Barreras Aprendizaje | Fortalezas Aprendizaje |
-Necesidades específicas de apoyo educativo | Justificación y orientaciones
+Necesidades de apoyo | Justificación y orientaciones | Centro Docente
 ```
+
+Once columnas, en el mismo orden y con los mismos nombres que el XLS que genera **informe2MD**, para que un bloque de filas se pegue aquí columna por columna. El visor también acepta el nombre largo de antes, `Necesidades específicas de apoyo educativo`, así que los libros ya montados siguen funcionando.
 
 - Si hay **varios informes con el mismo NIA**, el visor muestra solo el de `Fecha Informe` más reciente. Los anteriores permanecen en la hoja, pero no se ven.
 - Si un NIA aparece aquí y **no** en `Ficha`, el visor crea una ficha mínima para que el informe no se pierda. Aparece como ficha pendiente de completar.
-- El símbolo **¶** vale como salto de línea en cualquier campo de texto del libro. Es útil al volcar informes desde un PDF, donde los saltos de párrafo se pierden.
+- El símbolo **¶** vale como salto de línea en cualquier campo de texto del libro. Es útil al volcar informes desde un PDF, donde los saltos de párrafo se pierden. En `Necesidades de apoyo` separa además cada necesidad.
+- **Dos de sus columnas completan la ficha cuando esta está vacía**: `Centro Docente` rellena el `Centro ERG` y `Necesidades de apoyo` rellena el `Diagnóstico`. La ficha siempre manda — el informe solo rellena huecos — y cuando el dato viene del informe, la ficha lo indica con una etiqueta *del informe*.
+- **Y si los dos dicen cosas distintas, la ficha lo avisa** con un *⚠ el informe dice otra cosa*, mostrando al pasar el ratón lo que dice el informe. Se comparan como conjuntos de términos: el orden, las tildes, las mayúsculas y el separador no cuentan como discrepancia, así que `IES Pere Boïl` y `IES Pere Boil` no saltan. Tampoco salta cuando el informe trae prosa en lugar de una lista de términos, para no marcar a todo el mundo con los informes antiguos.
+  Al principio saltará en bastantes fichas, y eso es justo lo que tiene que hacer: cada aviso es una ficha escrita a mano que se ha quedado atrás respecto al informe que llegó después. Los avisos no se imprimen.
 
 ### Hoja `Anuladas` (opcional)
 
@@ -269,7 +274,7 @@ Aun así, la carpeta sincronizada es más segura que la alternativa de descargar
 
 ## Versionado
 
-- **Versión actual: 1.3**
+- **Versión actual: 1.4**
 - Consulta el changelog completo desde dentro de la app: botón `?` (esquina inferior derecha) → `Ver novedades`.
 - Releases publicados en [`/releases`](https://github.com/JLMirallesB/visor/releases).
 

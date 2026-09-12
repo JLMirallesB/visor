@@ -630,6 +630,20 @@
     word-break: break-word;
   }
   .ficha-field .value.empty { color: #aab1bb; font-style: italic; }
+  /* Procedencia de un campo que el informe también puede traer */
+  .campo-origen,
+  .campo-discrepa {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 9px;
+    white-space: nowrap;
+    vertical-align: 1px;
+    cursor: help;
+  }
+  .campo-origen { background: #eef1f6; color: #5b6673; }
+  .campo-discrepa { background: #fdf0dc; color: #8a5a12; border: 1px solid #f0d9a8; }
   .ficha-field.wide { grid-column: 1 / -1; }
 
   /* History */
@@ -1214,6 +1228,7 @@
     }
     .ficha-field .label { color: #555 !important; }
     .ficha-field .value { color: #000 !important; }
+    .campo-origen, .campo-discrepa { display: none !important; }
     .entry {
       page-break-inside: avoid;
       break-inside: avoid;
@@ -1417,8 +1432,16 @@
 /* =========================================================================
    State
    ========================================================================= */
-const APP_VERSION = "1.3";
+const APP_VERSION = "1.4";
 const CHANGELOG = [
+  { version: "1.4", date: "2026-09-12", changes: [
+    "«Centro ERG» y «Diagnóstico» se completan desde el informe cuando la ficha los tiene vacíos: el primero desde «Centro Docente» y el segundo desde «Necesidades de apoyo». La ficha siempre manda; el informe solo rellena huecos, y cuando lo hace se indica de dónde viene el dato.",
+    "Si la ficha y el informe dicen cosas distintas en esos dos campos, la ficha muestra un aviso con lo que dice el informe. Se comparan los valores como conjuntos de términos: el orden, las tildes, las mayúsculas y el separador no cuentan como discrepancia.",
+    "El aviso no salta cuando el informe trae prosa en lugar de una lista de términos, para no marcar una discrepancia en cada alumno con los informes antiguos.",
+    "La hoja «Informes» admite «Necesidades de apoyo» como nombre de esa columna, que es como la llama informe2MD, además del nombre largo de antes.",
+    "Nueva columna opcional «Centro Docente» en la hoja «Informes».",
+    "El diagnóstico se parte también por el símbolo ¶ al contarlo en la estadística, porque es el separador con que llegan las necesidades de un informe."
+  ]},
   { version: "1.3", date: "2026-09-12", changes: [
     "La hoja de registro se reconoce ahora por sus columnas y no solo por su nombre: la que tenga «Id» y «Hora de inicio» es el registro, se llame como se llame.",
     "Deja de importar cómo bautice Forms esa hoja —«Sheet1», «Hoja1», «Form1»— ni el idioma de la interfaz con que se creó el libro.",
@@ -2145,6 +2168,58 @@ function openDetail(nia) {
   show("screenDetail");
 }
 
+// ¿Dicen lo mismo la ficha y el informe? Se comparan como conjuntos de términos:
+// ni el orden, ni las tildes, ni las mayúsculas, ni el separador cuentan.
+// Si el informe trae prosa en lugar de términos no se comparan, porque con los
+// informes antiguos —texto largo del PDF— saltaría un aviso en cada alumno.
+function sinDiscrepancia(a, b) {
+  const partes = s => String(s || "").split(/[,;¶]+/).map(x => x.trim()).filter(Boolean);
+  const pa = partes(a), pb = partes(b);
+  if (!pa.length || !pb.length) return true;
+  if (pa.concat(pb).some(x => x.length > 60)) return true;
+  const norm = l => l.map(normalizeKey).sort().join("|");
+  return norm(pa) === norm(pb);
+}
+
+// Valor de un campo de la ficha que el informe también puede traer.
+// La ficha manda: el informe solo rellena cuando la ficha está vacía.
+function campoConInforme(r, clavesFicha, clavesInforme) {
+  const propio = String(
+    clavesFicha.map(k => r[k]).find(v => v != null && String(v).trim() !== "") || ""
+  ).trim();
+  const inf = state.informeByNia[r.NIA];
+  const ajeno = inf ? String(getField(inf, ...clavesInforme) || "").trim() : "";
+  if (propio) {
+    return { valor: propio, delInforme: false, discrepa: sinDiscrepancia(propio, ajeno) ? "" : ajeno };
+  }
+  return { valor: ajeno, delInforme: !!ajeno, discrepa: "" };
+}
+
+const CLAVES_DIAGNOSTICO = ["Necesidades de apoyo", "Necesidades específicas de apoyo educativo",
+  "Necesidades especificas de apoyo educativo", "Necesidades"];
+const CLAVES_CENTRO = ["Centro Docente", "Centro ERG", "Centro"];
+
+function diagnosticoDe(r) {
+  return campoConInforme(r, ["Diagnóstico", "Diagnostico"], CLAVES_DIAGNOSTICO);
+}
+function centroDe(r) {
+  return campoConInforme(r, ["Centro ERG"], CLAVES_CENTRO);
+}
+
+// Campo de ficha con su procedencia: de dónde viene el dato y si el informe
+// dice otra cosa.
+function fichaFieldConOrigen(label, info) {
+  if (!info.valor) return fichaField(label, "");
+  let html = formatText(info.valor);
+  if (info.delInforme) {
+    html += ` <span class="campo-origen" title="La ficha no lo tiene: se muestra lo que dice el informe de orientación">del informe</span>`;
+  }
+  if (info.discrepa) {
+    html += ` <span class="campo-discrepa" title="${escapeAttr("El informe de orientación dice: " + info.discrepa)}">⚠ el informe dice otra cosa</span>`;
+  }
+  return fichaField(label, `<span>${html}</span>`);
+}
+
 function renderFicha(r, informe) {
   const age = calcAge(r["Fecha de nacimiento"]);
   const apellidos = String(r.Apellidos || "").trim();
@@ -2175,7 +2250,7 @@ function renderFicha(r, informe) {
       <div class="contact-row cols-2">
         ${fichaField("Fecha de nacimiento",
           formatDate(r["Fecha de nacimiento"]) + (age != null ? `  ·  ${age} años` : ""))}
-        ${fichaField("Centro ERG", r["Centro ERG"])}
+        ${fichaFieldConOrigen("Centro ERG", centroDe(r))}
       </div>
     </div>`;
   const alumno = `
@@ -2225,7 +2300,7 @@ function renderFicha(r, informe) {
     <div class="card">
       <h3>Información académica y seguimiento</h3>
       <div class="academic-row">
-        ${fichaField("Diagnóstico", r["Diagnóstico"] || r.Diagnostico)}
+        ${fichaFieldConOrigen("Diagnóstico", diagnosticoDe(r))}
         ${fichaField("Campo Abierto", r["Campo Abierto"])}
       </div>
       <div class="erg-row">
@@ -2277,8 +2352,7 @@ function renderInformeSection(inf) {
     </div>
   `).join("");
 
-  const necesidades = getField(inf, "Necesidades específicas de apoyo educativo",
-    "Necesidades especificas de apoyo educativo", "Necesidades");
+  const necesidades = getField(inf, ...CLAVES_DIAGNOSTICO);
   const justificacion = getField(inf, "Justificación y orientaciones",
     "Justificacion y orientaciones", "Justificación", "Justificacion");
 
@@ -2539,10 +2613,10 @@ function renderStats() {
   const diagCounts = {};
   let withDiag = 0;
   state.ficha.forEach(r => {
-    const raw = String(r["Diagnóstico"] || r.Diagnostico || "").trim();
+    const raw = diagnosticoDe(r).valor;
     if (!raw) return;
     withDiag++;
-    raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean).forEach(p => {
+    raw.split(/[,;¶]+/).map(s => s.trim()).filter(Boolean).forEach(p => {
       diagCounts[p] = (diagCounts[p] || 0) + 1;
     });
   });

@@ -67,10 +67,13 @@ Copiar en la **fila 2** de la hoja `Informes`. El NIA debe ser **el mismo** que 
 | Fortalezas Participación | Buena relación con el grupo en tareas por parejas y en pequeño grupo. Acepta bien la mediación de la tutora. |
 | Barreras Aprendizaje | Pierde la atención en tareas largas que no tienen pautas intermedias. Dificultad para planificar el trabajo de varias sesiones: entrega tareas incompletas y olvida el material. |
 | Fortalezas Aprendizaje | Constante cuando los objetivos son cortos y comprobables. Responde bien al refuerzo positivo inmediato y a la agenda visual. |
-| Necesidades específicas de apoyo educativo | Adaptaciones metodológicas y de acceso: segmentación de las tareas en pasos, tiempo adicional en las pruebas escritas y puesto preferente en el aula.¶Agenda visual y revisión semanal de la planificación con la tutora.¶Seguimiento por la UEO y coordinación periódica con la familia. |
+| Necesidades de apoyo | TDAH: Combinado ¶ Altas capacidades |
+| Centro Docente | IES Exemple |
 | Justificación y orientaciones | Las dificultades de atención y de planificación, junto con una respuesta ansiosa ante la exposición pública, explican el desajuste entre su capacidad y su rendimiento académico.¶Se recomienda mantener las adaptaciones metodológicas en todas las materias, evitar las exposiciones orales no preparadas y anticipar los cambios de rutina.¶Revisión del informe al final del curso por el departamento de orientación del centro. |
 
-Los dos campos largos llevan varios `¶`. Así se ve para qué sirve: al volcar un informe desde un PDF los saltos de párrafo se pierden y todo queda en una sola línea. Poniendo `¶` donde iba el salto, el visor lo restituye al mostrarlo y al imprimirlo.
+El campo de justificación lleva varios `¶`. Así se ve para qué sirve: al volcar un informe desde un PDF los saltos de párrafo se pierden y todo queda en una sola línea. Poniendo `¶` donde iba el salto, el visor lo restituye al mostrarlo y al imprimirlo. En `Necesidades de apoyo` el `¶` separa además cada necesidad, que es como las emite informe2MD.
+
+**`Necesidades de apoyo` y `Centro Docente` están puestos a propósito para ver otra cosa.** La ficha de esta alumna dice `TDAH, ansiedad` en el diagnóstico y `IES Exemple` en el centro. El centro coincide, así que no pasará nada; el diagnóstico no, así que en la ficha saldrá un aviso de que el informe dice otra cosa. Es el mecanismo que avisa de que una ficha escrita a mano se ha quedado atrás respecto al informe que llegó.
 
 \newpage
 
@@ -93,7 +96,7 @@ No hay que indicar la fecha ni el curso académico: los calcula el visor a parti
 
 ## 4. Qué debe verse en el visor
 
-Abrir `visor.html`, cargar el libro y comprobar estas siete cosas. Si alguna falla, el apartado correspondiente del montaje dice dónde mirar.
+Abrir `visor.html`, cargar el libro y comprobar estas ocho cosas. Si alguna falla, el apartado correspondiente del montaje dice dónde mirar.
 
 | # | Qué comprobar |
 |:--|:--|
@@ -104,6 +107,7 @@ Abrir `visor.html`, cargar el libro y comprobar estas siete cosas. Si alguna fal
 | 5 | En el histórico, la actuación **con la fecha de hoy**, la etiqueta **Reunión** en color, y **tu nombre** a la derecha de la línea |
 | 6 | En *Estadística*: suma 1 en **Prioritario**, aparece en **pendientes propios** y **no** aparece en alertas (tiene actuación reciente) |
 | 7 | En *Estadística*, el diagnóstico cuenta **dos** entradas —*TDAH* y *ansiedad*—, no una |
+| 8 | Junto al **Diagnóstico** de la ficha, el aviso **⚠ el informe dice otra cosa**; al pasar el ratón por encima, lo que dice. Junto al **Centro ERG** no debe salir nada, porque coinciden |
 
 Si el **nombre del profesional llega vacío** en el punto 5, el formulario no está registrando la identidad: hay que revisar los ajustes de respuestas restringidas a la organización.
 
