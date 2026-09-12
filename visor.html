@@ -842,6 +842,98 @@
     font-size: 13px;
   }
   .stat-bar-row:last-child { margin-bottom: 0; }
+
+  /* Desglose del diagnóstico. Los dos tonos son dos pasos de la misma gama:
+     validados a ΔE 19 bajo daltonismo y 3:1 contra el fondo, y con etiqueta
+     directa al lado de cada barra, que es el relieve que pide un tono claro. */
+  .stat-bar-row.apilada { grid-template-columns: 150px 1fr 34px 104px; }
+  .stat-bar-row.apilada > span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stat-bar-row.apilada .split {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .bar.stack { display: flex; gap: 2px; }          /* 2px de fondo entre segmentos */
+  .bar.stack .seg { height: 100%; border-radius: 5px; }
+  .bar.stack .seg.eem { background: #5a96ce; }
+  .bar.stack .seg.epm { background: #2f5a95; }
+  .bar.stack .seg.nc  { background: var(--border-strong); }
+  .matriz-leyenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .matriz-leyenda .sw {
+    display: inline-block;
+    width: 11px; height: 11px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: -1px;
+  }
+  .matriz-leyenda .sw.eem { background: #5a96ce; }
+  .matriz-leyenda .sw.epm { background: #2f5a95; }
+  .matriz-leyenda .sw.nc  { background: var(--border-strong); }
+  .matriz-titulo {
+    margin: 18px 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .matriz-wrap { overflow-x: auto; }
+  .diag-matriz {
+    width: max-content;          /* pega las columnas a sus etiquetas */
+    border-collapse: separate;
+    border-spacing: 2px;
+    font-size: 12.5px;
+  }
+  .diag-matriz th, .diag-matriz td { padding: 0; }
+  .diag-matriz thead th {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: center;
+    padding-bottom: 2px;
+    white-space: nowrap;
+  }
+  .diag-matriz tbody th {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text);
+    padding-right: 10px;
+    white-space: nowrap;
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .diag-matriz td {
+    width: 38px;
+    min-width: 38px;
+    height: 26px;
+    text-align: center;
+    border-radius: 4px;
+  }
+  .diag-matriz td.vacia { background: #f7f9fc; }
+  /* Una sola gama, de claro a oscuro. El número es el dato; el fondo, la pista. */
+  .diag-matriz td.n { font-weight: 600; color: var(--text); }
+  .diag-matriz td.l1 { background: #e3ecf8; }
+  .diag-matriz td.l2 { background: #c3d7ee; }
+  .diag-matriz td.l3 { background: #8fb4dd; }
+  .diag-matriz td.l4 { background: #3b6fb6; color: #fff; }   /* 5.08:1 en blanco */
+  .diag-matriz td.tot, .diag-matriz th.tot {
+    font-weight: 700;
+    padding-left: 8px;
+    text-align: right;
+    min-width: 42px;
+  }
   .stat-bar-row .count { font-weight: 600; text-align: right; }
   .stat-bar-row .bar {
     height: 10px;
@@ -1176,6 +1268,14 @@
     .big-number .label { font-size: 8pt !important; }
     .big-number .delta { font-size: 8.5pt !important; }
     .stat-bar-row { font-size: 10pt !important; margin-bottom: 5px !important; }
+    .stat-bar-row.apilada { grid-template-columns: 120px 1fr 30px 96px !important; }
+    .matriz-wrap { overflow: visible !important; }
+    .diag-matriz { font-size: 9pt !important; page-break-inside: avoid; break-inside: avoid; }
+    .diag-matriz td, .bar.stack .seg, .matriz-leyenda .sw {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    .diag-matriz td.vacia { border: 1px solid #eee !important; }
     .month-chart { height: 90px !important; }
     .stats-section-title { font-size: 9pt !important; margin: 12px 0 6px !important; }
     /* Convertir las listas (pendientes/alertas) en no clicables visualmente */
@@ -1441,6 +1541,8 @@ const CHANGELOG = [
     "La hoja «Informes» admite «Necesidades de apoyo» como nombre de esa columna, que es como la llama informe2MD, además del nombre largo de antes.",
     "Nueva columna opcional «Centro Docente» en la hoja «Informes».",
     "El diagnóstico se parte también por el símbolo ¶ al contarlo en la estadística, porque es el separador con que llegan las necesidades de un informe.",
+    "El bloque de diagnósticos se desglosa por curso: primero una barra apilada que reparte cada diagnóstico entre enseñanzas elementales y profesionales, y debajo una matriz diagnóstico × curso con el recuento en cada celda.",
+    "La matriz usa columnas de ancho fijo y alineadas, que es lo que permite leer en vertical qué curso acumula casos — una barra apilada de diez segmentos dibuja lo mismo pero impide esa lectura, porque cada curso empieza en una posición distinta en cada fila.",
     "Nuevo bloque de estadística «Centros educativos»: cuántos casos hay de cada centro de régimen general, ordenados de más a menos, con el recuento de los que no tienen centro. Usa el centro efectivo, así que cuenta también el que llega del informe cuando la ficha no lo tiene.",
     "Los cursos se ordenan por enseñanza y luego por número —primero todos los EEM y después todos los EPM— tanto en la estadística como en el desplegable del filtro, que los entrelazaba. Y ahora se calcula del propio texto, así que un «1º EEM» se coloca con los EEM en lugar de irse al final."
   ]},
@@ -2648,6 +2750,29 @@ function renderStats() {
       diagCounts[p] = (diagCounts[p] || 0) + 1;
     });
   });
+  // 6b. Desglose del diagnóstico por curso y por enseñanza.
+  // Un alumno con dos diagnósticos cuenta en las dos filas, igual que en el total.
+  const SIN_CURSO = "sin curso";
+  const diagPorCurso = {};          // diagnóstico -> { curso -> n }
+  const diagEEM = {}, diagEPM = {}, diagSinCurso = {};
+  const cursosConDiag = new Set();
+  state.ficha.forEach(r => {
+    const raw = diagnosticoDe(r).valor;
+    if (!raw) return;
+    const curso = String(r.Curso || "").trim() || SIN_CURSO;
+    const tipo = curso === SIN_CURSO ? 2 : cursoRank(curso)[0];
+    cursosConDiag.add(curso);
+    raw.split(/[,;¶]+/).map(x => x.trim()).filter(Boolean).forEach(d => {
+      (diagPorCurso[d] ||= {});
+      diagPorCurso[d][curso] = (diagPorCurso[d][curso] || 0) + 1;
+      if (tipo === 0) diagEEM[d] = (diagEEM[d] || 0) + 1;
+      else if (tipo === 1) diagEPM[d] = (diagEPM[d] || 0) + 1;
+      else diagSinCurso[d] = (diagSinCurso[d] || 0) + 1;
+    });
+  });
+  const cursosMatriz = [...cursosConDiag].sort((a, b) =>
+    a === SIN_CURSO ? 1 : b === SIN_CURSO ? -1 : compararCursos(a, b));
+
   const diagSorted = Object.entries(diagCounts).sort((a, b) => b[1] - a[1]);
   const diagMax = Math.max(1, ...diagSorted.map(e => e[1]));
   const sinDiag = state.ficha.length - withDiag;
@@ -2704,6 +2829,53 @@ function renderStats() {
       + (diagSorted.length > 15 ? `<div class="stat-list-meta" style="margin-top:8px">… y ${diagSorted.length - 15} más</div>` : "")
       + (sinDiag > 0 ? `<div class="stat-list-meta" style="margin-top:6px">Sin diagnóstico registrado: ${sinDiag} alumno${sinDiag === 1 ? "" : "s"}</div>` : "")
     : `<div class="stat-list-empty">Sin diagnósticos registrados.</div>`;
+
+  // Barra apilada de dos segmentos: el reparto entre elementales y profesionales,
+  // que es la lectura de un barrido. Dos pasos de la misma tonalidad, con
+  // etiqueta directa, que es el relieve que exige un segmento claro.
+  const diagApiladas = diagSorted.length
+    ? diagSorted.map(([d, total]) => {
+        const e = diagEEM[d] || 0, pr = diagEPM[d] || 0, sc = diagSinCurso[d] || 0;
+        const w = n => (n / diagMax) * 100;
+        const trozo = (n, cls) => n ? `<div class="seg ${cls}" style="width:${w(n)}%" title="${n}"></div>` : "";
+        const etiqueta = [e ? `EEM ${e}` : "", pr ? `EPM ${pr}` : "", sc ? `s/c ${sc}` : ""]
+          .filter(Boolean).join(" · ");
+        return `
+          <div class="stat-bar-row apilada">
+            <span>${escapeHtml(d)}</span>
+            <div class="bar stack">${trozo(e, "eem")}${trozo(pr, "epm")}${trozo(sc, "nc")}</div>
+            <span class="count">${total}</span>
+            <span class="split">${etiqueta}</span>
+          </div>`;
+      }).join("")
+    : "";
+
+  // Matriz diagnóstico × curso. El dato son los números; el sombreado es una
+  // segunda pista para localizar las acumulaciones de un vistazo.
+  const nivelCelda = n => n >= 4 ? 4 : n;
+  const diagMatriz = (diagSorted.length && cursosMatriz.length)
+    ? `<div class="matriz-wrap">
+        <table class="diag-matriz">
+          <thead>
+            <tr><th class="esq"></th>${cursosMatriz.map(c =>
+              `<th>${escapeHtml(c === SIN_CURSO ? "s/c" : c.replace(/\s+/g, " "))}</th>`).join("")}<th class="tot">Total</th></tr>
+          </thead>
+          <tbody>
+            ${diagSorted.map(([d, total]) => `
+              <tr>
+                <th scope="row">${escapeHtml(d)}</th>
+                ${cursosMatriz.map(c => {
+                  const n = (diagPorCurso[d] || {})[c] || 0;
+                  return n
+                    ? `<td class="n l${nivelCelda(n)}" title="${escapeAttr(d + " · " + (c === SIN_CURSO ? "sin curso" : c) + ": " + n)}">${n}</td>`
+                    : `<td class="vacia"></td>`;
+                }).join("")}
+                <td class="tot">${total}</td>
+              </tr>`).join("")}
+          </tbody>
+        </table>
+      </div>`
+    : "";
 
   const especBars = especSorted.length
     ? especSorted.slice(0, 12).map(([k, v]) => {
@@ -2813,7 +2985,17 @@ function renderStats() {
       </div>
       <div class="stat-card full">
         <h4>Diagnósticos <span class="stat-list-meta">(${withDiag} con diagnóstico de ${state.ficha.length})</span></h4>
-        ${diagBars}
+        ${diagSorted.length ? `
+          <div class="matriz-leyenda">
+            <span><i class="sw eem"></i> Enseñanzas elementales</span>
+            <span><i class="sw epm"></i> Enseñanzas profesionales</span>
+            ${Object.keys(diagSinCurso).length ? `<span><i class="sw nc"></i> Sin curso en la ficha</span>` : ""}
+          </div>
+          ${diagApiladas}
+          <div class="matriz-titulo">Desglose por curso</div>
+          ${diagMatriz}
+          <div class="stat-list-meta" style="margin-top:8px">Quien tiene más de un diagnóstico cuenta en todas sus filas, así que las columnas suman diagnósticos, no alumnos.</div>
+        ` : diagBars}
       </div>
       <div class="stat-card full">
         <h4>Actividad mensual</h4>
