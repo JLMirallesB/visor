@@ -161,7 +161,7 @@ Microsoft no documenta el modelo de permisos de estas carpetas, así que la úni
   - Contador de actuaciones por alumno.
 - **Ficha del alumno** con cabecera grande, edad calculada, datos académicos (diagnóstico y campo abierto), datos de contacto colapsables organizados por persona, e histórico de actuaciones expandible.
 - **Histórico de actuaciones** con icono clicable de adjunto, apertura del adjunto en ventana emergente y orden cronológico invertible.
-- **Pestaña Estadística** con 6 bloques: distribución por seguimiento, actuaciones del mes/curso, pendientes propios, alertas de prioritarios sin actuación reciente, distribuciones por curso/especialidad/diagnóstico y actividad mensual del curso.
+- **Pestaña Estadística** con 7 bloques: distribución por seguimiento, actuaciones del mes/curso, pendientes propios, alertas de prioritarios sin actuación reciente, distribuciones por curso/especialidad/diagnóstico, **casos por centro educativo** y actividad mensual del curso.
 - **Informe de orientación** (si existe la hoja `Informes`): botón desplegable en la ficha con barreras y fortalezas de acceso, participación y aprendizaje, necesidades específicas y justificación, e impresión independiente en tipografía compacta.
 - **Columnas de UEO y ERG** en la ficha, con chips de estado (Sí / No / En Proceso).
 - **Anulación de actuaciones** listando su `Id` en la hoja `Anuladas`: desaparecen del histórico, del contador y de la estadística, sin tocar la hoja que escribe Forms.
