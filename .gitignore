@@ -11,3 +11,6 @@ node_modules/
 !.claude/agents/
 !.claude/skills/
 CLAUDE.local.md
+
+# Ficheros temporales de Excel (libro abierto)
+~$*

@@ -1483,18 +1483,6 @@ const state = {
 const CURSO_VALUES = ["1 EEM","2 EEM","3 EEM","4 EEM","1 EPM","2 EPM","3 EPM","4 EPM","5 EPM","6 EPM"];
 const MONTH_LABELS_ES = ["Sep","Oct","Nov","Dic","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago"];
 
-const FICHA_COLS = [
-  "NIA","Nombre","Apellidos","Fecha de nacimiento","Curso","Especialidad",
-  "Centro ERG","Teléfono Alumno","Mail Alumno",
-  "Nombre Madre","Teléfono Madre","Mail Madre",
-  "Nombre Padre","Teléfono Padre","Mail Padre",
-  "Tutor/a","Diagnóstico","Seguimiento","Situación","Campo Abierto"
-];
-const REG_COLS = [
-  "NIA","Fecha","Curso Académico","Tipo de entrada","Título/Asunto",
-  "Descripción","Profesional que registra","Enlace a documento","Otros"
-];
-
 /* =========================================================================
    Screens
    ========================================================================= */
@@ -1742,7 +1730,7 @@ function findSheet(wb, name) {
 }
 
 function parseWorkbook(wb) {
-  const sReg = findSheet(wb, "Sheet1") || findSheet(wb, "Registro");
+  const sReg = findSheet(wb, "Sheet1") || findSheet(wb, "Registro") || findSheet(wb, "Hoja1");
   const sFic = findSheet(wb, "Ficha");
   if (!sReg) throw new Error("No se encuentra la hoja 'Sheet1' (registro).");
   if (!sFic) throw new Error("No se encuentra la hoja 'Ficha'.");

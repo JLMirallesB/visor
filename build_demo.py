@@ -141,10 +141,13 @@ ficha_rows = [
 # ---------------------------------------------------------------------------
 # Hoja "Sheet1" (Registro)
 # ---------------------------------------------------------------------------
+# Las cinco primeras las genera Forms solo; el resto son las preguntas del
+# formulario. No hay columna de Curso Académico (la app lo calcula desde la
+# fecha) ni de profesional (la app usa "Nombre", que autorrellena Forms).
 REG_HEADERS = [
     "Id","Hora de inicio","Hora de finalización","Correo electrónico","Nombre",
-    "NIA","Curso Académico","Tipo de Entrada","Título/Asunto","Descripción",
-    "Profesional que registra","Enlace a documento (subir pdf)","Otros"
+    "NIA","Tipo de Entrada","Título/Asunto","Descripción",
+    "Enlace a documento (subir pdf)","Otros"
 ]
 
 PROFS = [
@@ -279,11 +282,9 @@ def build_registro_rows():
             mail,                                   # Correo electrónico
             nombre,                                 # Nombre
             nia,                                    # NIA
-            "",                                     # Curso Académico (lo calcula la app)
             tipo,                                   # Tipo de Entrada
             titulo,                                 # Título/Asunto
             desc,                                   # Descripción
-            "",                                     # Profesional que registra (la app usa Nombre)
             SAMPLE_PDF if with_pdf else "",         # Enlace a documento
             otros,                                  # Otros
         ])
