@@ -1417,8 +1417,14 @@
 /* =========================================================================
    State
    ========================================================================= */
-const APP_VERSION = "1.1";
+const APP_VERSION = "1.2";
 const CHANGELOG = [
+  { version: "1.2", date: "2026-09-12", changes: [
+    "Nueva hoja «Anuladas» (opcional): una lista de Id de actuaciones que el visor deja de mostrar. Sirve para retirar del registro una actuación registrada por error.",
+    "Las actuaciones anuladas desaparecen del histórico, del contador de actuaciones de cada alumno y de toda la estadística, como si no se hubieran registrado.",
+    "Se anula por Id y no borrando la fila, porque borrarla en la hoja que escribe Forms no funciona: la sincronización la restaura en cuanto llega la siguiente respuesta.",
+    "La hoja de registro se reconoce también si se llama «Hoja1», además de «Sheet1» y «Registro»."
+  ]},
   { version: "1.1", date: "2026-04-19", changes: [
     "Nueva hoja «Informes» (opcional): lee informes de orientación vinculados por NIA con barreras/fortalezas de acceso, participación y aprendizaje, necesidades específicas y justificación.",
     "Si hay varios informes para un mismo NIA, se muestra solo el de fecha más reciente.",
@@ -1460,6 +1466,7 @@ const state = {
   registro: [],
   ficha: [],
   informes: [],
+  anuladas: new Set(),
   fichaByNia: {},
   registroByNia: {},
   informeByNia: {},
@@ -1547,6 +1554,7 @@ function clearLoadedData() {
   state.registro = [];
   state.ficha = [];
   state.informes = [];
+  state.anuladas = new Set();
   state.fichaByNia = {};
   state.registroByNia = {};
   state.informeByNia = {};
@@ -1746,6 +1754,23 @@ function parseWorkbook(wb) {
     state.informes.forEach(r => normalizeNia(r));
   } else {
     state.informes = [];
+  }
+
+  // Hoja Anuladas (opcional): Id de las actuaciones que no deben mostrarse.
+  // Se anula por Id porque borrar la fila de Sheet1 no funciona: el vínculo con
+  // Forms solo añade, y restaura las filas borradas con la siguiente respuesta.
+  state.anuladas = new Set();
+  const sAnu = findSheet(wb, "Anuladas") || findSheet(wb, "Anulaciones");
+  if (sAnu) {
+    XLSX.utils.sheet_to_json(sAnu, { defval: "", raw: true }).forEach(r => {
+      const id = String(getField(r, "Id") || "").trim();
+      if (id) state.anuladas.add(id);
+    });
+  }
+  if (state.anuladas.size) {
+    state.registro = state.registro.filter(
+      r => !state.anuladas.has(String(getField(r, "Id") || "").trim())
+    );
   }
 }
 

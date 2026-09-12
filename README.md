@@ -4,7 +4,7 @@ Visor offline de registros de orientación para conservatorios profesionales de 
 
 ## ¿Qué es?
 
-Un único archivo HTML que abres en el navegador. Eliges un Excel local con dos hojas obligatorias (`Sheet1` con las actuaciones del Forms y `Ficha` con los datos del alumnado) y una opcional (`Informes`, con los informes de orientación) y la app te muestra:
+Un único archivo HTML que abres en el navegador. Eliges un Excel local con dos hojas obligatorias (`Sheet1` con las actuaciones del Forms y `Ficha` con los datos del alumnado) y dos opcionales (`Informes` y `Anuladas`) y la app te muestra:
 
 - Listado del alumnado con búsqueda multicampo y filtros por seguimiento, situación, curso, especialidad y curso académico.
 - Ficha individual con datos académicos, contactos, diagnóstico e histórico de actuaciones.
@@ -103,7 +103,7 @@ Después, **mueve el libro a tu carpeta**. El vínculo con el formulario va por 
 
 > Si el libro no se actualiza solo y hay que volver a pedir *Abrir en Excel* cada vez, no tienes sincronización en vivo y el resto del proceso no funciona como está descrito.
 
-### 7. Las hojas `Ficha`, `Informes` y `Listas`
+### 7. Las hojas `Ficha`, `Informes`, `Anuladas` y `Listas`
 
 Se trasplantan desde `plantilla-hojas.xlsx` — ver [Estructura del Excel esperado](#estructura-del-excel-esperado). No las crees a mano.
 
@@ -135,7 +135,8 @@ Con [`ejemplo-ficticio.docx`](ejemplo-ficticio.docx): una ficha, un informe y un
 
 ### Reglas que no conviene romper
 
-1. **`Sheet1` no se toca**: la escribe Forms. Ni renombrar columnas, ni reordenarlas, ni insertar una en medio, ni ordenar las filas, ni borrarlas. Si hace falta un cálculo, va en otra hoja.
+1. **`Sheet1` no se toca**: la escribe Forms. Ni renombrar columnas, ni reordenarlas, ni insertar una en medio, ni ordenar las filas. Si hace falta un cálculo, va en otra hoja.
+   **Y borrar filas ahí no funciona**: el vínculo con Forms solo añade, y las restaura en cuanto llega la siguiente respuesta. Borrar la respuesta dentro de Forms tampoco las quita. Para retirar una actuación, su `Id` va a la hoja `Anuladas`.
 2. **No se edita una copia descargada.** Las hojas mantenidas a mano se editan en Excel para la web, o abriendo el archivo de la carpeta sincronizada. Una copia aparte no vuelve a ningún sitio.
 3. **El formulario no se recrea.** Uno nuevo nace con un libro nuevo y vacío, y `Ficha` e `Informes` se quedan en el viejo.
 4. **El formulario no se abre a respuestas anónimas**, o se pierde la autoría.
@@ -151,7 +152,7 @@ Con [`ejemplo-ficticio.docx`](ejemplo-ficticio.docx): una ficha, un informe y un
 
 ## Funcionalidades principales
 
-- **Carga local de Excel** con dos hojas obligatorias (`Sheet1` y `Ficha`) y una opcional (`Informes`).
+- **Carga local de Excel** con dos hojas obligatorias (`Sheet1` y `Ficha`) y dos opcionales (`Informes` y `Anuladas`).
 - **Listado del alumnado** con:
   - Búsqueda por nombre, apellidos, NIA, tutor/a o especialidad.
   - Filtros visuales por Seguimiento y Situación (chips clicables).
@@ -163,6 +164,7 @@ Con [`ejemplo-ficticio.docx`](ejemplo-ficticio.docx): una ficha, un informe y un
 - **Pestaña Estadística** con 6 bloques: distribución por seguimiento, actuaciones del mes/curso, pendientes propios, alertas de prioritarios sin actuación reciente, distribuciones por curso/especialidad/diagnóstico y actividad mensual del curso.
 - **Informe de orientación** (si existe la hoja `Informes`): botón desplegable en la ficha con barreras y fortalezas de acceso, participación y aprendizaje, necesidades específicas y justificación, e impresión independiente en tipografía compacta.
 - **Columnas de UEO y ERG** en la ficha, con chips de estado (Sí / No / En Proceso).
+- **Anulación de actuaciones** listando su `Id` en la hoja `Anuladas`: desaparecen del histórico, del contador y de la estadística, sin tocar la hoja que escribe Forms.
 - **Toggle «Incluir fichas pendientes de completar»** para mostrar u ocultar las fichas que solo tienen NIA (ocultas por defecto).
 - **Generación de PDF** mediante el diálogo del navegador: ficha completa del alumno, actuación individual o panel de estadísticas. Cabecera personalizable con nombre del centro, fecha y nota de confidencialidad.
 - **Aviso de pérdida de datos** al volver al inicio.
@@ -171,9 +173,9 @@ Consulta el detalle completo de cambios desde el botón `?` (esquina inferior de
 
 ## Estructura del Excel esperado
 
-> **Atajo para no cometer erratas:** descarga [`plantilla-hojas.xlsx`](plantilla-hojas.xlsx), que trae tres hojas listas: `Ficha` con sus cabeceras y **siete columnas con desplegable**, `Informes` con las suyas, y `Listas` con los valores admitidos (incluidas las **40 especialidades oficiales**, 36 de música y 4 de danza). El visor ignora la hoja `Listas`.
+> **Atajo para no cometer erratas:** descarga [`plantilla-hojas.xlsx`](plantilla-hojas.xlsx), que trae cuatro hojas listas: `Ficha` con sus cabeceras y **siete columnas con desplegable**, `Informes` y `Anuladas` con las suyas, y `Listas` con los valores admitidos (incluidas las **40 especialidades oficiales**, 36 de música y 4 de danza). El visor ignora la hoja `Listas`.
 >
-> En el **Excel de escritorio**, con los dos libros abiertos: clic derecho en la pestaña de la plantilla → **Mover o copiar…** → *Al libro*: tu libro → marcar **Crear una copia**. Las tres, y `Listas` no es opcional: los desplegables de `Ficha` apuntan a sus rangos. Así las hojas llegan enteras, con su nombre ya puesto, y no hay que crearlas antes — si ya existe una hoja `Ficha`, la copia entra como `Ficha (2)` y el visor no la encuentra.
+> En el **Excel de escritorio**, con los dos libros abiertos: clic derecho en la pestaña de la plantilla → **Mover o copiar…** → *Al libro*: tu libro → marcar **Crear una copia**. Las cuatro, y `Listas` no es opcional: los desplegables de `Ficha` apuntan a sus rangos. Así las hojas llegan enteras, con su nombre ya puesto, y no hay que crearlas antes — si ya existe una hoja `Ficha`, la copia entra como `Ficha (2)` y el visor no la encuentra.
 >
 > En **Excel para la web** no existe *Mover o copiar* entre libros: hay que crear las hojas a mano y pegar **toda la hoja** de la plantilla en `A1`, empezando por `Listas` para que las validaciones encuentren sus rangos, y comprobando después que los desplegables han sobrevivido.
 >
@@ -238,6 +240,19 @@ Necesidades específicas de apoyo educativo | Justificación y orientaciones
 - Si un NIA aparece aquí y **no** en `Ficha`, el visor crea una ficha mínima para que el informe no se pierda. Aparece como ficha pendiente de completar.
 - El símbolo **¶** vale como salto de línea en cualquier campo de texto del libro. Es útil al volcar informes desde un PDF, donde los saltos de párrafo se pierden.
 
+### Hoja `Anuladas` (opcional)
+
+Una lista de los `Id` de las actuaciones que el visor **debe dejar de mostrar**.
+
+```
+Id | Motivo | Fecha
+```
+
+- El `Id` es el que Forms asigna a cada respuesta, la primera columna de `Sheet1`.
+- Las actuaciones anuladas desaparecen del histórico del alumno, del contador de actuaciones y de toda la estadística, como si no se hubieran registrado.
+- Se anula por `Id` y **no borrando la fila** de `Sheet1` porque borrarla no funciona: el vínculo entre Forms y el libro **solo añade**, y restaura las filas borradas en cuanto llega la siguiente respuesta. Borrar la respuesta dentro de Forms tampoco quita la fila del libro.
+- `Motivo` y `Fecha` no los lee el visor: están para que quede constancia de por qué se retiró una actuación. En un registro que puede acabar justificando decisiones, eso vale más que una fila desaparecida.
+
 ## Privacidad
 
 Del lado del visor:
@@ -255,7 +270,7 @@ Aun así, la carpeta sincronizada es más segura que la alternativa de descargar
 
 ## Versionado
 
-- **Versión actual: 1.1**
+- **Versión actual: 1.2**
 - Consulta el changelog completo desde dentro de la app: botón `?` (esquina inferior derecha) → `Ver novedades`.
 - Releases publicados en [`/releases`](https://github.com/JLMirallesB/visor/releases).
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Genera plantilla-hojas.xlsx: las hojas Ficha, Informes y Listas listas para
-trasplantar al libro que crea Microsoft Forms.
+"""Genera plantilla-hojas.xlsx: las hojas Ficha, Informes, Anuladas y Listas
+listas para trasplantar al libro que crea Microsoft Forms.
 
 Las cabeceras se importan de build_demo.py para que no puedan desincronizarse
 de las del archivo de ejemplo.
@@ -20,6 +20,11 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from build_demo import FICHA_HEADERS, INFORME_HEADERS
 
 OUT = Path(__file__).parent / "plantilla-hojas.xlsx"
+
+# Hoja Anuladas: Id de las actuaciones que el visor deja de mostrar. Se anula por
+# Id y no borrando la fila de Sheet1, porque el vínculo con Forms solo añade y
+# restaura las filas borradas con la siguiente respuesta.
+ANULADAS_HEADERS = ["Id", "Motivo", "Fecha"]
 
 # Hasta qué fila llega la validación en la hoja Ficha. El desplegable es una
 # propiedad de las celdas, no de la cabecera.
@@ -111,6 +116,7 @@ def main():
     ws_fic.title = "Ficha"
     add_headers(ws_fic, FICHA_HEADERS)
     add_headers(wb.create_sheet("Informes"), INFORME_HEADERS)
+    add_headers(wb.create_sheet("Anuladas"), ANULADAS_HEADERS)
     _, rangos = build_listas(wb)
     add_validaciones(ws_fic, FICHA_HEADERS, rangos)
     wb.save(OUT)
@@ -118,6 +124,7 @@ def main():
     print(f"  Ficha:    {len(FICHA_HEADERS)} columnas, "
           f"{len(rangos)} con desplegable hasta la fila {ULTIMA_FILA}")
     print(f"  Informes: {len(INFORME_HEADERS)} columnas")
+    print(f"  Anuladas: {len(ANULADAS_HEADERS)} columnas")
     print(f"  Listas:   {len(LISTAS)} listas — "
           f"{len(ESPECIALIDADES_MUSICA)} especialidades de música + "
           f"{len(ESPECIALIDADES_DANZA)} de danza")
