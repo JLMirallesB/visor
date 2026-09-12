@@ -1440,7 +1440,8 @@ const CHANGELOG = [
     "El aviso no salta cuando el informe trae prosa en lugar de una lista de términos, para no marcar una discrepancia en cada alumno con los informes antiguos.",
     "La hoja «Informes» admite «Necesidades de apoyo» como nombre de esa columna, que es como la llama informe2MD, además del nombre largo de antes.",
     "Nueva columna opcional «Centro Docente» en la hoja «Informes».",
-    "El diagnóstico se parte también por el símbolo ¶ al contarlo en la estadística, porque es el separador con que llegan las necesidades de un informe."
+    "El diagnóstico se parte también por el símbolo ¶ al contarlo en la estadística, porque es el separador con que llegan las necesidades de un informe.",
+    "Los cursos se ordenan por enseñanza y luego por número —primero todos los EEM y después todos los EPM— tanto en la estadística como en el desplegable del filtro, que los entrelazaba. Y ahora se calcula del propio texto, así que un «1º EEM» se coloca con los EEM en lugar de irse al final."
   ]},
   { version: "1.3", date: "2026-09-12", changes: [
     "La hoja de registro se reconoce ahora por sus columnas y no solo por su nombre: la que tenga «Id» y «Hora de inicio» es el registro, se llame como se llame.",
@@ -1516,7 +1517,6 @@ const state = {
   centroNombre: ""
 };
 
-const CURSO_VALUES = ["1 EEM","2 EEM","3 EEM","4 EEM","1 EPM","2 EPM","3 EPM","4 EPM","5 EPM","6 EPM"];
 const MONTH_LABELS_ES = ["Sep","Oct","Nov","Dic","Ene","Feb","Mar","Abr","May","Jun","Jul","Ago"];
 
 /* =========================================================================
@@ -1920,13 +1920,30 @@ function buildIndexes() {
 /* =========================================================================
    Filters
    ========================================================================= */
+// Los cursos se ordenan por enseñanza y luego por número: primero todos los EEM
+// y después todos los EPM, nunca alfabéticamente, que los entrelaza. Se calcula
+// del propio texto, así que aguanta variantes como «1º EEM» o «1 eem».
+function cursoRank(c) {
+  const n = normalizeKey(c);
+  const tipo = n.includes("eem") ? 0 : n.includes("epm") ? 1 : 2;
+  const num = parseInt((String(c).match(/\d+/) || ["99"])[0], 10);
+  return [tipo, num, n];
+}
+function compararCursos(a, b) {
+  const ra = cursoRank(a), rb = cursoRank(b);
+  return ra[0] - rb[0] || ra[1] - rb[1] || String(ra[2]).localeCompare(String(rb[2]), "es");
+}
+function cursosOrdenados(arr) {
+  return [...new Set(arr.filter(v => v !== "" && v != null))].sort(compararCursos);
+}
+
 function uniqueSorted(arr) {
   return [...new Set(arr.filter(v => v !== "" && v != null))].sort((a, b) => {
     return String(a).localeCompare(String(b), "es", { numeric: true, sensitivity: "base" });
   });
 }
 function populateFilterOptions() {
-  const cursos = uniqueSorted(state.ficha.map(r => r.Curso));
+  const cursos = cursosOrdenados(state.ficha.map(r => r.Curso));
   const especs = uniqueSorted(state.ficha.map(r => r.Especialidad));
   const segsData = uniqueSorted(state.ficha.map(r => r.Seguimiento));
   const sitsData = uniqueSorted(state.ficha.map(r => getStudentSituacion(r)));
@@ -2595,10 +2612,7 @@ function renderStats() {
   state.ficha.forEach(r => {
     if (r.Curso) cursoCounts[r.Curso] = (cursoCounts[r.Curso] || 0) + 1;
   });
-  const cursoOrder = [
-    ...CURSO_VALUES.filter(c => cursoCounts[c]),
-    ...Object.keys(cursoCounts).filter(c => !CURSO_VALUES.includes(c)).sort()
-  ];
+  const cursoOrder = Object.keys(cursoCounts).sort(compararCursos);
   const cursoMax = Math.max(1, ...Object.values(cursoCounts));
 
   // 5b. Distribución por especialidad
