@@ -630,6 +630,25 @@
     word-break: break-word;
   }
   .ficha-field .value.empty { color: #aab1bb; font-style: italic; }
+  .col-diag { max-width: 190px; }
+  .col-diag .diag-uno {
+    display: inline-block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: bottom;
+  }
+  .col-diag .diag-mas {
+    display: inline-block;
+    background: var(--chip-bg);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 9px;
+    padding: 1px 6px;
+    cursor: help;
+  }
   /* Procedencia de un campo que el informe también puede traer */
   .campo-origen,
   .campo-discrepa {
@@ -928,6 +947,9 @@
   .diag-matriz td.l2 { background: #c3d7ee; }
   .diag-matriz td.l3 { background: #8fb4dd; }
   .diag-matriz td.l4 { background: #3b6fb6; color: #fff; }   /* 5.08:1 en blanco */
+  /* Variante para columnas con nombre largo: los tipos de actuación */
+  .diag-matriz.ancha td { width: auto; min-width: 92px; }
+  .diag-matriz.ancha thead th { padding: 0 6px 2px; }
   .diag-matriz td.tot, .diag-matriz th.tot {
     font-weight: 700;
     padding-left: 8px;
@@ -1458,6 +1480,7 @@
         <input type="text" id="searchInput" placeholder="Buscar por nombre, apellidos, NIA, tutor/a o especialidad…">
         <select id="filterCurso"><option value="">Curso: todos</option></select>
         <select id="filterEspecialidad"><option value="">Especialidad: todas</option></select>
+        <select id="filterDiagnostico"><option value="">Diagnóstico: todos</option></select>
         <select id="filterCursoAcad"><option value="">Curso Acad.: todos</option></select>
       </div>
       <div class="toolbar-row">
@@ -1487,6 +1510,7 @@
             <th data-sort="Curso">Curso · Especialidad</th>
             <th data-sort="Tutor/a">Tutor/a</th>
             <th data-sort="Seguimiento">Seguimiento</th>
+            <th data-sort="diagnostico">Diagnóstico</th>
             <th data-sort="Situación">Situación</th>
             <th data-sort="actuaciones" class="col-num" title="Número de actuaciones registradas">Act.</th>
           </tr>
@@ -1541,6 +1565,12 @@ const CHANGELOG = [
     "La hoja «Informes» admite «Necesidades de apoyo» como nombre de esa columna, que es como la llama informe2MD, además del nombre largo de antes.",
     "Nueva columna opcional «Centro Docente» en la hoja «Informes».",
     "El diagnóstico se parte también por el símbolo ¶ al contarlo en la estadística, porque es el separador con que llegan las necesidades de un informe.",
+    "El listado del alumnado muestra el diagnóstico en una columna propia. Si hay más de uno se ve el primero y un «+N» que los enumera al pasar el ratón, para localizar de un vistazo quién acumula varios.",
+    "Y se puede filtrar por diagnóstico: el desplegable lista cada uno por separado, así que filtrar por «TDAH» encuentra también a quien lo tiene junto a otro.",
+    "Nueva lista «Autorizados sin contactar»: alumnado cuya familia ya autorizó el contacto con el centro de régimen general y a quien todavía no se ha contactado. Cruza tres columnas de la ficha que hasta ahora solo se veían una a una dentro de cada ficha.",
+    "Nueva lista «Sin ninguna actuación» y reparto de actuaciones por alumno (ninguna · 1 · 2 o 3 · 4 o más), para localizar los casos que se abrieron y nadie ha tocado.",
+    "Nuevo bloque «Tipos de actuación»: en qué se reparte el trabajo del departamento —reuniones, derivaciones, comunicación con la familia…—, que era un dato que estaba en el registro y no se contaba en ninguna parte.",
+    "Y dentro del bloque de diagnósticos, una segunda matriz de diagnóstico × tipo de actuación: qué clase de trabajo genera cada diagnóstico.",
     "El bloque de diagnósticos se desglosa por curso: primero una barra apilada que reparte cada diagnóstico entre enseñanzas elementales y profesionales, y debajo una matriz diagnóstico × curso con el recuento en cada celda.",
     "La matriz usa columnas de ancho fijo y alineadas, que es lo que permite leer en vertical qué curso acumula casos — una barra apilada de diez segmentos dibuja lo mismo pero impide esa lectura, porque cada curso empieza en una posición distinta en cada fila.",
     "Nuevo bloque de estadística «Centros educativos»: cuántos casos hay de cada centro de régimen general, ordenados de más a menos, con el recuento de los que no tienen centro. Usa el centro efectivo, así que cuenta también el que llega del informe cuando la ficha no lo tiene.",
@@ -1609,6 +1639,7 @@ const state = {
     search: "",
     curso: "",
     especialidad: "",
+    diagnostico: "",
     seguimiento: new Set(),
     situacion: new Set(),
     cursoAcad: "",
@@ -1697,12 +1728,13 @@ function clearLoadedData() {
     search: "",
     curso: "",
     especialidad: "",
+    diagnostico: "",
     seguimiento: new Set(),
     situacion: new Set(),
     cursoAcad: "",
     showIncompletas: false
   };
-  ["searchInput","filterCurso","filterEspecialidad","filterCursoAcad"]
+  ["searchInput","filterCurso","filterEspecialidad","filterDiagnostico","filterCursoAcad"]
     .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
   const chk = document.getElementById("chkIncompletas");
   if (chk) chk.checked = false;
@@ -2048,6 +2080,7 @@ function uniqueSorted(arr) {
 function populateFilterOptions() {
   const cursos = cursosOrdenados(state.ficha.map(r => r.Curso));
   const especs = uniqueSorted(state.ficha.map(r => r.Especialidad));
+  const diags = uniqueSorted(state.ficha.flatMap(diagTerminos));
   const segsData = uniqueSorted(state.ficha.map(r => r.Seguimiento));
   const sitsData = uniqueSorted(state.ficha.map(r => getStudentSituacion(r)));
   const hasEmptySeg = state.ficha.some(r => !r.Seguimiento);
@@ -2056,6 +2089,7 @@ function populateFilterOptions() {
 
   setOptions("filterCurso", "Curso: todos", cursos);
   setOptions("filterEspecialidad", "Especialidad: todas", especs);
+  setOptions("filterDiagnostico", "Diagnóstico: todos", diags);
   setOptions("filterCursoAcad", "Curso Acad.: todos", cAcad);
 
   // Curso académico: por defecto el actual si existe en los datos
@@ -2116,11 +2150,12 @@ function setOptions(id, placeholder, values) {
     values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
 }
 
-["searchInput","filterCurso","filterEspecialidad","filterCursoAcad"].forEach(id => {
+["searchInput","filterCurso","filterEspecialidad","filterDiagnostico","filterCursoAcad"].forEach(id => {
   document.getElementById(id).addEventListener("input", () => {
     state.filters.search = document.getElementById("searchInput").value;
     state.filters.curso = document.getElementById("filterCurso").value;
     state.filters.especialidad = document.getElementById("filterEspecialidad").value;
+    state.filters.diagnostico = document.getElementById("filterDiagnostico").value;
     state.filters.cursoAcad = document.getElementById("filterCursoAcad").value;
     renderList();
   });
@@ -2162,6 +2197,7 @@ function renderList() {
   }
   if (state.filters.curso) rows = rows.filter(r => r.Curso === state.filters.curso);
   if (state.filters.especialidad) rows = rows.filter(r => r.Especialidad === state.filters.especialidad);
+  if (state.filters.diagnostico) rows = rows.filter(r => diagTerminos(r).includes(state.filters.diagnostico));
   rows = rows.filter(r => {
     const v = r.Seguimiento || EMPTY_KEY;
     return state.filters.seguimiento.has(v);
@@ -2188,6 +2224,10 @@ function renderList() {
     if (k === "Seguimiento") {
       va = seguimientoRank(a.Seguimiento);
       vb = seguimientoRank(b.Seguimiento);
+    } else if (k === "diagnostico") {
+      const ta = diagTerminos(a), tb = diagTerminos(b);
+      va = (ta.length ? "0" : "1") + (ta[0] || "").toLowerCase();
+      vb = (tb.length ? "0" : "1") + (tb[0] || "").toLowerCase();
     } else if (k === "actuaciones") {
       va = (state.registroByNia[a.NIA] || []).length;
       vb = (state.registroByNia[b.NIA] || []).length;
@@ -2230,6 +2270,7 @@ function renderList() {
           <td>${escapeHtml(cursoEspec)}</td>
           <td>${escapeHtml(r["Tutor/a"])}</td>
           <td>${r.Seguimiento ? `<span class="chip ${segClass(r.Seguimiento)}">${escapeHtml(r.Seguimiento)}</span>` : ""}</td>
+          <td class="col-diag">${celdaDiagnostico(r)}</td>
           <td>${escapeHtml(sit)}</td>
           <td class="col-num">${actCount > 0 ? `<span class="act-count">${actCount}</span>` : `<span class="act-count zero">0</span>`}</td>
         </tr>`;
@@ -2248,6 +2289,16 @@ function renderList() {
       th.appendChild(ind);
     }
   });
+}
+
+// En la columna cabe uno: si hay más se indica cuántos, y se enumeran al pasar
+// el ratón. Así se ve de un vistazo quién acumula varios.
+function celdaDiagnostico(r) {
+  const t = diagTerminos(r);
+  if (!t.length) return "";
+  const primero = `<span class="diag-uno">${escapeHtml(t[0])}</span>`;
+  if (t.length === 1) return primero;
+  return `${primero} <span class="diag-mas" title="${escapeAttr(t.join(" · "))}">+${t.length - 1}</span>`;
 }
 
 function isFichaIncompleta(r) {
@@ -2318,6 +2369,12 @@ function campoConInforme(r, clavesFicha, clavesInforme) {
 const CLAVES_DIAGNOSTICO = ["Necesidades de apoyo", "Necesidades específicas de apoyo educativo",
   "Necesidades especificas de apoyo educativo", "Necesidades"];
 const CLAVES_CENTRO = ["Centro Docente", "Centro ERG", "Centro"];
+
+// Los diagnósticos de un alumno, ya partidos. Mismo separador que la estadística.
+function diagTerminos(r) {
+  return String(diagnosticoDe(r).valor || "")
+    .split(/[,;¶]+/).map(x => x.trim()).filter(Boolean);
+}
 
 function diagnosticoDe(r) {
   return campoConInforme(r, ["Diagnóstico", "Diagnostico"], CLAVES_DIAGNOSTICO);
@@ -2680,6 +2737,29 @@ function renderStats() {
     .filter(r => /espera.*nuestra/i.test(getStudentSituacion(r)))
     .sort(byApellidosNombre);
 
+  // 2b. Autorizados para contactar con el ERG a los que nadie ha llamado.
+  const esSi = v => {
+    const n = normalizeKey(v);
+    return n === "si" || n.startsWith("si") && !n.startsWith("sin");
+  };
+  const autorizadosSinContactar = state.ficha
+    .filter(r => esSi(r["Autorización para Contactar ERG?"] || r["Autorización para Contactar ERG"] ||
+                     r["Autorizacion para Contactar ERG?"] || r["Autorizacion para Contactar ERG"]))
+    .filter(r => !esSi(r["Contactado ERG?"] || r["Contactado ERG"]))
+    .sort(byApellidosNombre);
+
+  // 2c. Alumnado de la ficha sin ninguna actuación registrada, y el reparto.
+  const conActuaciones = r => (state.registroByNia[r.NIA] || []).length;
+  const fichasReales = state.ficha.filter(r => !isFichaIncompleta(r));
+  const sinActuaciones = fichasReales.filter(r => conActuaciones(r) === 0).sort(byApellidosNombre);
+  const tramos = [
+    ["Ninguna", r => conActuaciones(r) === 0],
+    ["1", r => conActuaciones(r) === 1],
+    ["2 o 3", r => { const n = conActuaciones(r); return n >= 2 && n <= 3; }],
+    ["4 o más", r => conActuaciones(r) >= 4]
+  ].map(([k, f]) => [k, fichasReales.filter(f).length]);
+  const tramoMax = Math.max(1, ...tramos.map(t => t[1]));
+
   // 3. Alertas: prioritarios sin actuación en últimos 30 días
   const cutoff = new Date(now.getTime() - 30 * 86400000);
   const alertas = state.ficha
@@ -2750,6 +2830,15 @@ function renderStats() {
       diagCounts[p] = (diagCounts[p] || 0) + 1;
     });
   });
+  // 5d. Tipos de actuación, y su cruce con el diagnóstico del alumnado.
+  const tipoCounts = {};
+  state.registro.forEach(r => {
+    const t = String(getField(r, "Tipo de entrada", "Tipo") || "").trim();
+    if (t) tipoCounts[t] = (tipoCounts[t] || 0) + 1;
+  });
+  const tipoSorted = Object.entries(tipoCounts).sort((a, b) => b[1] - a[1]);
+  const tipoMax = Math.max(1, ...tipoSorted.map(t => t[1]));
+
   // 6b. Desglose del diagnóstico por curso y por enseñanza.
   // Un alumno con dos diagnósticos cuenta en las dos filas, igual que en el total.
   const SIN_CURSO = "sin curso";
@@ -2770,6 +2859,26 @@ function renderStats() {
       else diagSinCurso[d] = (diagSinCurso[d] || 0) + 1;
     });
   });
+  // Actuaciones por diagnóstico y tipo. Solo cuenta el alumnado con diagnóstico,
+  // y quien tiene dos cuenta en las dos filas, igual que en el resto del bloque.
+  const tipoPorDiag = {};
+  let actConDiag = 0;
+  state.ficha.forEach(r => {
+    const raw = diagnosticoDe(r).valor;
+    if (!raw) return;
+    const suyas = state.registroByNia[r.NIA] || [];
+    actConDiag += suyas.length;
+    const diags = raw.split(/[,;¶]+/).map(x => x.trim()).filter(Boolean);
+    suyas.forEach(a => {
+      const t = String(getField(a, "Tipo de entrada", "Tipo") || "").trim();
+      if (!t) return;
+      diags.forEach(d => {
+        (tipoPorDiag[d] ||= {});
+        tipoPorDiag[d][t] = (tipoPorDiag[d][t] || 0) + 1;
+      });
+    });
+  });
+
   const cursosMatriz = [...cursosConDiag].sort((a, b) =>
     a === SIN_CURSO ? 1 : b === SIN_CURSO ? -1 : compararCursos(a, b));
 
@@ -2833,6 +2942,54 @@ function renderStats() {
   // Barra apilada de dos segmentos: el reparto entre elementales y profesionales,
   // que es la lectura de un barrido. Dos pasos de la misma tonalidad, con
   // etiqueta directa, que es el relieve que exige un segmento claro.
+  const nivelCelda = n => n >= 4 ? 4 : n;
+
+  const tipoBars = tipoSorted.length
+    ? tipoSorted.map(([k, v]) => `
+        <div class="stat-bar-row">
+          <span>${escapeHtml(k)}</span>
+          <div class="bar"><div class="bar-fill" style="width:${(v / tipoMax) * 100}%"></div></div>
+          <span class="count">${v}</span>
+        </div>`).join("")
+    : `<div class="stat-list-empty">Sin actuaciones registradas.</div>`;
+
+  const tramoBars = tramos.map(([k, v]) => `
+    <div class="stat-bar-row">
+      <span>${escapeHtml(k)}</span>
+      <div class="bar"><div class="bar-fill" style="width:${(v / tramoMax) * 100}%"></div></div>
+      <span class="count">${v}</span>
+    </div>`).join("");
+
+  // Matriz diagnóstico × tipo de actuación. Las columnas llevan el nombre
+  // entero, que son pocas y algunas son largas.
+  const tiposMatriz = tipoSorted.map(([t]) => t);
+  const diagTipoMatriz = (diagSorted.length && tiposMatriz.length)
+    ? `<div class="matriz-wrap">
+        <table class="diag-matriz ancha">
+          <thead>
+            <tr><th class="esq"></th>${tiposMatriz.map(t => `<th>${escapeHtml(t)}</th>`).join("")}<th class="tot">Act.</th></tr>
+          </thead>
+          <tbody>
+            ${diagSorted.map(([d]) => {
+              const fila = tipoPorDiag[d] || {};
+              const total = Object.values(fila).reduce((a, b) => a + b, 0);
+              return `
+                <tr>
+                  <th scope="row">${escapeHtml(d)}</th>
+                  ${tiposMatriz.map(t => {
+                    const n = fila[t] || 0;
+                    return n
+                      ? `<td class="n l${nivelCelda(n)}" title="${escapeAttr(d + " · " + t + ": " + n)}">${n}</td>`
+                      : `<td class="vacia"></td>`;
+                  }).join("")}
+                  <td class="tot">${total}</td>
+                </tr>`;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>`
+    : "";
+
   const diagApiladas = diagSorted.length
     ? diagSorted.map(([d, total]) => {
         const e = diagEEM[d] || 0, pr = diagEPM[d] || 0, sc = diagSinCurso[d] || 0;
@@ -2852,7 +3009,6 @@ function renderStats() {
 
   // Matriz diagnóstico × curso. El dato son los números; el sombreado es una
   // segunda pista para localizar las acumulaciones de un vistazo.
-  const nivelCelda = n => n >= 4 ? 4 : n;
   const diagMatriz = (diagSorted.length && cursosMatriz.length)
     ? `<div class="matriz-wrap">
         <table class="diag-matriz">
@@ -2969,6 +3125,22 @@ function renderStats() {
       </div>
     </div>
 
+    <div class="stats-grid" style="margin-bottom:14px">
+      <div class="stat-card">
+        <h4>Autorizados sin contactar <span class="stat-list-meta">(${autorizadosSinContactar.length})</span></h4>
+        ${renderStudentList(autorizadosSinContactar,
+            r => [String(r["Centro ERG"] || centroDe(r).valor || "sin centro"),
+                  String(r["Contactado ERG?"] || r["Contactado ERG"] || "").trim() || "sin marcar"].join(" · "),
+            "Nadie con autorización pendiente de contactar.")}
+      </div>
+      <div class="stat-card">
+        <h4>Sin ninguna actuación <span class="stat-list-meta">(${sinActuaciones.length})</span></h4>
+        ${renderStudentList(sinActuaciones,
+            r => [String(r.Curso || "").trim(), String(r.Seguimiento || "").trim()].filter(Boolean).join(" · ") || "—",
+            "Todo el alumnado de la ficha tiene alguna actuación.")}
+      </div>
+    </div>
+
     <div class="stats-section-title">Panorámica</div>
     <div class="stats-grid">
       <div class="stat-card">
@@ -2978,6 +3150,14 @@ function renderStats() {
       <div class="stat-card">
         <h4>Distribución por especialidad</h4>
         ${especBars}
+      </div>
+      <div class="stat-card">
+        <h4>Tipos de actuación <span class="stat-list-meta">(${state.registro.length} en total)</span></h4>
+        ${tipoBars}
+      </div>
+      <div class="stat-card">
+        <h4>Actuaciones por alumno <span class="stat-list-meta">(de ${fichasReales.length} fichas completas)</span></h4>
+        ${tramoBars}
       </div>
       <div class="stat-card full">
         <h4>Centros educativos <span class="stat-list-meta">(${conCentro} de ${state.ficha.length}${sinCentro ? ` · ${sinCentro} sin centro` : ""})</span></h4>
@@ -2994,6 +3174,8 @@ function renderStats() {
           ${diagApiladas}
           <div class="matriz-titulo">Desglose por curso</div>
           ${diagMatriz}
+          <div class="matriz-titulo">Actuaciones por tipo <span style="text-transform:none;font-weight:400">· ${actConDiag} de ${state.registro.length}, solo las del alumnado con diagnóstico</span></div>
+          ${diagTipoMatriz}
           <div class="stat-list-meta" style="margin-top:8px">Quien tiene más de un diagnóstico cuenta en todas sus filas, así que las columnas suman diagnósticos, no alumnos.</div>
         ` : diagBars}
       </div>
