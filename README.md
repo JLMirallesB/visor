@@ -183,7 +183,9 @@ Consulta el detalle completo de cambios desde el botón `?` (esquina inferior de
 >
 > Conviene, porque las columnas de `Ficha` se leen **por nombre exacto**: un `Telefono Alumno` sin tilde o un `Tutor` sin `/a` dejan la columna vacía sin avisar de nada. Las de `Sheet1`, en cambio, admiten variantes.
 
-### Hoja `Sheet1` (registro generado por Microsoft Forms)
+### Hoja de registro (la que genera Microsoft Forms)
+
+**El nombre de esta hoja no importa.** Forms la bautiza de maneras distintas según cómo se haya creado el libro y en qué idioma: `Sheet1`, `Hoja1`, `Form1`. El visor la busca primero por esos nombres y, si ninguno coincide, **la reconoce por sus columnas**: la hoja que tenga `Id` y `Hora de inicio` es el registro.
 
 Las cinco primeras columnas las genera Forms solo. El resto son, en este orden, las preguntas del formulario:
 
@@ -270,7 +272,7 @@ Aun así, la carpeta sincronizada es más segura que la alternativa de descargar
 
 ## Versionado
 
-- **Versión actual: 1.2**
+- **Versión actual: 1.3**
 - Consulta el changelog completo desde dentro de la app: botón `?` (esquina inferior derecha) → `Ver novedades`.
 - Releases publicados en [`/releases`](https://github.com/JLMirallesB/visor/releases).
 

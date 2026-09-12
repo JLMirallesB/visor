@@ -1417,8 +1417,14 @@
 /* =========================================================================
    State
    ========================================================================= */
-const APP_VERSION = "1.2";
+const APP_VERSION = "1.3";
 const CHANGELOG = [
+  { version: "1.3", date: "2026-09-12", changes: [
+    "La hoja de registro se reconoce ahora por sus columnas y no solo por su nombre: la que tenga «Id» y «Hora de inicio» es el registro, se llame como se llame.",
+    "Deja de importar cómo bautice Forms esa hoja —«Sheet1», «Hoja1», «Form1»— ni el idioma de la interfaz con que se creó el libro.",
+    "Si el nombre coincide con uno de los conocidos se usa directamente; el reconocimiento por columnas solo entra cuando ninguno coincide.",
+    "Mensaje de error más útil cuando no se encuentra la hoja de registro: dice qué nombres se aceptan y qué columnas se buscan."
+  ]},
   { version: "1.2", date: "2026-09-12", changes: [
     "Nueva hoja «Anuladas» (opcional): una lista de Id de actuaciones que el visor deja de mostrar. Sirve para retirar del registro una actuación registrada por error.",
     "Las actuaciones anuladas desaparecen del histórico, del contador de actuaciones de cada alumno y de toda la estadística, como si no se hubieran registrado.",
@@ -1737,10 +1743,35 @@ function findSheet(wb, name) {
   return match ? wb.Sheets[match] : null;
 }
 
+// Nombres de las hojas que mantenemos nosotros: nunca son la de registro.
+const HOJAS_PROPIAS = ["ficha", "informes", "informe", "anuladas", "anulaciones", "listas"];
+
+// La hoja de registro se busca primero por nombre —lo habitual— y si ninguno
+// coincide, por sus columnas. Forms la bautiza de maneras distintas según cómo
+// se haya creado el libro y en qué idioma: Sheet1, Hoja1, Form1…
+function findRegistroSheet(wb) {
+  const porNombre = findSheet(wb, "Sheet1") || findSheet(wb, "Registro")
+                 || findSheet(wb, "Hoja1") || findSheet(wb, "Form1");
+  if (porNombre) return porNombre;
+  for (const name of wb.SheetNames) {
+    if (HOJAS_PROPIAS.includes(normalizeKey(name))) continue;
+    const filas = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "" });
+    const cab = (filas[0] || []).map(normalizeKey);
+    const tieneId = cab.includes("id");
+    const tieneMomento = cab.some(c =>
+      c.startsWith("horadeinicio") || c.startsWith("horadefinalizacion") || c === "fecha");
+    if (tieneId && tieneMomento) return wb.Sheets[name];
+  }
+  return null;
+}
+
 function parseWorkbook(wb) {
-  const sReg = findSheet(wb, "Sheet1") || findSheet(wb, "Registro") || findSheet(wb, "Hoja1");
+  const sReg = findRegistroSheet(wb);
   const sFic = findSheet(wb, "Ficha");
-  if (!sReg) throw new Error("No se encuentra la hoja 'Sheet1' (registro).");
+  if (!sReg) throw new Error(
+    "No se encuentra la hoja de registro. Debe llamarse 'Sheet1', 'Registro', " +
+    "'Hoja1' o 'Form1', o bien tener las columnas 'Id' y 'Hora de inicio'."
+  );
   if (!sFic) throw new Error("No se encuentra la hoja 'Ficha'.");
   state.registro = XLSX.utils.sheet_to_json(sReg, { defval: "", raw: true });
   state.ficha = XLSX.utils.sheet_to_json(sFic, { defval: "", raw: true });
